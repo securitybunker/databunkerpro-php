@@ -5,11 +5,21 @@ namespace DatabunkerPro;
 use Exception;
 
 class DatabunkerproApi {
-    private $baseURL;
-    private $xBunkerToken;
-    private $xBunkerTenant;
+    /** @var string */
+    private string $baseURL;
+    
+    /** @var string */
+    private string $xBunkerToken;
+    
+    /** @var string */
+    private string $xBunkerTenant;
 
-    public function __construct($baseURL, $xBunkerToken = '', $xBunkerTenant = '') {
+    /**
+     * @param string $baseURL The base URL of the DatabunkerPro API
+     * @param string $xBunkerToken The API token
+     * @param string $xBunkerTenant The tenant identifier
+     */
+    public function __construct(string $baseURL, string $xBunkerToken = '', string $xBunkerTenant = '') {
         $this->baseURL = $baseURL;
         $this->xBunkerToken = $xBunkerToken;
         $this->xBunkerTenant = $xBunkerTenant;
