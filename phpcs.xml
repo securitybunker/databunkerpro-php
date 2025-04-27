@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<ruleset name="DatabunkerPro">
+    <description>PHP CodeSniffer configuration for DatabunkerPro PHP client</description>
+
+    <file>src</file>
+    <file>tests</file>
+
+    <exclude-pattern>vendor/*</exclude-pattern>
+
+    <rule ref="PSR12"/>
+</ruleset> 
