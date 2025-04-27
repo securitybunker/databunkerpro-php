@@ -8,9 +8,30 @@ use PHPUnit\Framework\TestCase;
 class DatabunkerproAPITest extends TestCase
 {
     private $api;
+    private static $serverAvailable = false;
+
+    public static function setUpBeforeClass(): void
+    {
+        $api = new DatabunkerproApi(
+            getenv('DATABUNKER_URL'),
+            getenv('DATABUNKER_TOKEN'),
+            getenv('DATABUNKER_TENANT')
+        );
+
+        try {
+            $result = $api->getSystemStats();
+            self::$serverAvailable = is_array($result) && isset($result['status']) && $result['status'] === 'ok';
+        } catch (\Exception $e) {
+            self::$serverAvailable = false;
+        }
+    }
 
     protected function setUp(): void
     {
+        if (!self::$serverAvailable) {
+            $this->markTestSkipped('DatabunkerPro server is not available');
+        }
+
         $this->api = new DatabunkerproApi(
             getenv('DATABUNKER_URL'),
             getenv('DATABUNKER_TOKEN'),
