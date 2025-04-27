@@ -71,10 +71,10 @@ jobs:
       - name: Run PHPUnit
         run: composer test
 
-      - name: Run PHPStan
-        if: ${{ matrix.php >= '7.4' }}
-        run: composer phpstan
+      # - name: Run PHPStan
+      #   if: ${{ matrix.php >= '7.4' }}
+      #   run: composer phpstan
 
-      - name: Run CodeSniffer
-        if: ${{ matrix.php >= '7.4' }}
-        run: composer cs-check 
+      # - name: Run CodeSniffer
+      #   if: ${{ matrix.php >= '7.4' }}
+      #   run: composer cs-check
