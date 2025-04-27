@@ -2,6 +2,8 @@
 
 namespace DatabunkerPro;
 
+use Exception;
+
 class DatabunkerproAPI {
     private $baseURL;
     private $xBunkerToken;
