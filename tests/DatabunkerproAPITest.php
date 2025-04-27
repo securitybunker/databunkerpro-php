@@ -2,7 +2,7 @@
 
 namespace DatabunkerPro\Tests;
 
-use DatabunkerPro\DatabunkerproAPI;
+use DatabunkerPro\DatabunkerproApi;
 use PHPUnit\Framework\TestCase;
 
 class DatabunkerproAPITest extends TestCase
@@ -11,7 +11,7 @@ class DatabunkerproAPITest extends TestCase
 
     protected function setUp(): void
     {
-        $this->api = new DatabunkerproAPI(
+        $this->api = new DatabunkerproApi(
             getenv('DATABUNKER_URL'),
             getenv('DATABUNKER_TOKEN'),
             getenv('DATABUNKER_TENANT')

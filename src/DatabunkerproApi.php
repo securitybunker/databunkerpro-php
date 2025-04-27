@@ -4,7 +4,7 @@ namespace DatabunkerPro;
 
 use Exception;
 
-class DatabunkerproAPI {
+class DatabunkerproApi {
     private $baseURL;
     private $xBunkerToken;
     private $xBunkerTenant;
