@@ -10,7 +10,7 @@ class DatabunkerproAPITest extends TestCase
     private $api;
     private static $serverAvailable = false;
 
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         $api = new DatabunkerproApi(
             getenv('DATABUNKER_URL'),
@@ -26,7 +26,7 @@ class DatabunkerproAPITest extends TestCase
         }
     }
 
-    protected function setUp()
+    protected function setUp(): void
     {
         if (!self::$serverAvailable) {
             $this->markTestSkipped('DatabunkerPro server is not available');
