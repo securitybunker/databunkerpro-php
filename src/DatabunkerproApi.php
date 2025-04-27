@@ -1,5 +1,7 @@
 <?php
 
+namespace DatabunkerPro;
+
 class DatabunkerproAPI {
     private $baseURL;
     private $xBunkerToken;
