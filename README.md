@@ -9,7 +9,7 @@ Official PHP client library for the DatabunkerPro API.
 
 ## Requirements
 
-- PHP 7.4 or higher
+- PHP 5.6 or higher
 - JSON extension
 
 ## Installation
