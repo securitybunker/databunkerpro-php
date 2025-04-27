@@ -48,9 +48,7 @@ jobs:
             is_manual: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.php_version == '8.1' }}
           - php: '8.2'
             is_manual: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.php_version == '8.2' }}
-      exclude:
-        - php: ${{ matrix.php }}
-          when: ${{ github.event_name == 'workflow_dispatch' && !matrix.is_manual }}
+    if: ${{ github.event_name != 'workflow_dispatch' || matrix.is_manual }}
 
     name: PHP ${{ matrix.php }}
 
