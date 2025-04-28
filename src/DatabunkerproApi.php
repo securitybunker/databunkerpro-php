@@ -19,52 +19,42 @@ class DatabunkerproApi {
         $headers = [
             'Content-Type: application/json'
         ];
-
         if ($this->xBunkerToken) {
             $headers[] = 'X-Bunker-Token: ' . $this->xBunkerToken;
         }
         if ($this->xBunkerTenant) {
             $headers[] = 'X-Bunker-Tenant: ' . $this->xBunkerTenant;
         }
-
-        $options = [
-            'http' => [
-                'method' => $method,
-                'header' => $headers
-            ]
-        ];
-
+        $url = $this->baseURL . '/v2/' . $endpoint;
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         if ($data || $requestMetadata) {
             $bodyData = $data ? $data : [];
             if ($requestMetadata) {
                 $bodyData['request_metadata'] = $requestMetadata;
             }
-            $options['http']['content'] = json_encode($bodyData);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($bodyData));
         }
-
-        $url = $this->baseURL . '/v2/' . $endpoint;
-        
         try {
-            $context = stream_context_create($options);
-            $response = file_get_contents($url, false, $context);
-            $result = json_decode($response, true);
-
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             if ($response === false) {
-                throw new Exception('API request failed');
+                throw new Exception('cURL error: ' . curl_error($ch));
             }
-
-            if (isset($http_response_header[0]) && strpos($http_response_header[0], '200') === false) {
-                if (isset($result['status'])) {
-                    return $result;
-                } else {
-                    throw new Exception($result['message'] ?? 'API request failed');
-                }
+            $result = json_decode($response, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new Exception('Error decoding JSON response: ' . json_last_error_msg());
             }
-
+            curl_close($ch);
             return $result;
-        } catch (Exception $error) {
-            error_log('Error making request: ' . $error->getMessage());
-            return null;
+        } catch (Exception $e) {
+            if (isset($ch)) {
+                curl_close($ch);
+            }
+            throw new Exception('Error making request: ' . $e->getMessage());
         }
     }
 
