@@ -1,5 +1,5 @@
 {
-    "name": "databunkerpro/databunkerpro-php",
+    "name": "securitybunker/databunkerpro-php",
     "description": "PHP client library for DatabunkerPro API",
     "type": "library",
     "license": "MIT",
