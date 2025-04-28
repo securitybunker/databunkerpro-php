@@ -1,16 +1,32 @@
+# Composer
 /vendor/
 composer.lock
-.phpunit.result.cache
-.php_cs.cache
-.php_cs
-.phpunit.cache
+
+# IDE
 .idea/
 .vscode/
-*.swp
-*.swo
+*.sublime-project
+*.sublime-workspace
+
+# OS
 .DS_Store
+Thumbs.db
+
+# PHPUnit
+.phpunit.result.cache
+/phpunit.xml
+
+# Environment
 .env
 .env.*
 !.env.example
-coverage/
-build/ 
+
+# Coverage
+/coverage/
+*.cache
+
+.php_cs.cache
+.php_cs
+.phpunit.cache
+*.swp
+*.swo 
