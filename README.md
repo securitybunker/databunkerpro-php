@@ -1,9 +1,9 @@
 # DatabunkerPro PHP Client Library
 
-[![Latest Version](https://img.shields.io/packagist/v/databunkerpro/databunkerpro-php.svg?style=flat-square)](https://packagist.org/packages/databunkerpro/databunkerpro-php)
-[![Total Downloads](https://img.shields.io/packagist/dt/databunkerpro/databunkerpro-php.svg?style=flat-square)](https://packagist.org/packages/databunkerpro/databunkerpro-php)
-[![Build Status](https://github.com/databunkerpro/databunkerpro-php/actions/workflows/ci.yml/badge.svg)](https://github.com/databunkerpro/databunkerpro-php/actions)
-[![License](https://img.shields.io/packagist/l/databunkerpro/databunkerpro-php.svg?style=flat-square)](https://packagist.org/packages/databunkerpro/databunkerpro-php)
+[![Latest Version](https://img.shields.io/packagist/v/securitybunker/databunkerpro-php.svg?style=flat-square)](https://packagist.org/packages/securitybunker/databunkerpro-php)
+[![Total Downloads](https://img.shields.io/packagist/dt/securitybunker/databunkerpro-php.svg?style=flat-square)](https://packagist.org/packages/securitybunker/databunkerpro-php)
+[![Build Status](https://github.com/securitybunker/databunkerpro-php/actions/workflows/ci.yml/badge.svg)](https://github.com/securitybunker/databunkerpro-php/actions)
+[![License](https://img.shields.io/packagist/l/securitybunker/databunkerpro-php.svg?style=flat-square)](https://packagist.org/packages/securitybunker/databunkerpro-php)
 
 Official PHP client library for the DatabunkerPro API.
 
