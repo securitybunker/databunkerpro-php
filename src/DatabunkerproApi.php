@@ -310,13 +310,14 @@ class DatabunkerproApi {
     }
 
     // Sensitive Records Tokenization API
-    public function createToken($tokentype, $record, $requestMetadata = null) {
-        $data = ['tokentype' => $tokentype, 'record' => $record];
+    public function createToken($tokentype, $record, $options = [], $requestMetadata = null) {
+        $data = array_merge(['tokentype' => $tokentype, 'record' => $record], $options);
         return $this->makeRequest('TokenCreate', 'POST', $data, $requestMetadata);
     }
 
-    public function createTokensBulk($records, $requestMetadata = null) {
-        return $this->makeRequest('TokenCreateBulk', 'POST', ['records' => $records], $requestMetadata);
+    public function createTokensBulk($records, $options = [], $requestMetadata = null) {
+        $data = array_merge(['records' => $records], $options);
+        return $this->makeRequest('TokenCreateBulk', 'POST', $data, $requestMetadata);
     }
 
     public function getToken($token, $requestMetadata = null) {
@@ -511,8 +512,10 @@ class DatabunkerproApi {
     public function getSystemMetrics($requestMetadata = null) {
         // Call /metrics endpoint
         $url = $this->baseURL . '/metrics';
-        
         $headers = [];
+        if ($this->xBunkerToken) {
+            $headers[] = 'X-Bunker-Token: ' . $this->xBunkerToken;
+        }
         $options = [
             'http' => [
                 'method' => 'GET',
