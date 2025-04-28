@@ -17,7 +17,7 @@ Official PHP client library for the DatabunkerPro API.
 Install the package using Composer:
 
 ```bash
-composer require databunkerpro/databunkerpro-php
+composer require securitybunker/databunkerpro-php
 ```
 
 ## Usage
