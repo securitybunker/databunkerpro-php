@@ -292,7 +292,6 @@ class DatabunkerproApi {
         } else {
             $data['groupname'] = $groupname;
         }
-
         if ($rolename) {
             if (is_numeric($rolename) && intval($rolename) == $rolename) {
                 $data['roleid'] = $rolename;
@@ -300,7 +299,6 @@ class DatabunkerproApi {
                 $data['rolename'] = $rolename;
             }
         }
-
         return $this->makeRequest('GroupAddUser', 'POST', $data, $requestMetadata);
     }
 
@@ -326,14 +324,6 @@ class DatabunkerproApi {
 
     public function deleteToken($token, $requestMetadata = null) {
         return $this->makeRequest('TokenDelete', 'POST', ['token' => $token], $requestMetadata);
-    }
-
-    public function listTokensBulk($tokens, $requestMetadata = null) {
-        return $this->makeRequest('TokenListBulk', 'POST', ['tokens' => $tokens], $requestMetadata);
-    }
-
-    public function deleteTokensBulk($tokens, $requestMetadata = null) {
-        return $this->makeRequest('TokenDeleteBulk', 'POST', ['tokens' => $tokens], $requestMetadata);
     }
 
     // Audit Management
@@ -425,6 +415,28 @@ class DatabunkerproApi {
 
     public function bulkListAuditEvents($unlockuuid, $offset = 0, $limit = 10, $requestMetadata = null) {
         return $this->makeRequest('BulkListAuditEvents', 'POST', ['unlockuuid' => $unlockuuid, 'offset' => $offset, 'limit' => $limit], $requestMetadata);
+    }
+
+    /**
+     * Lists multiple tokens in bulk
+     * @param string $unlockuuid UUID for the bulk operation
+     * @param array $tokens Array of tokens to list
+     * @param array|null $requestMetadata Additional metadata to include with the request
+     * @return array The list of tokens information
+     */
+    public function bulkListTokens($unlockuuid, $tokens, $requestMetadata = null) {
+        return $this->makeRequest('BulkListTokens', 'POST', ['unlockuuid' => $unlockuuid, 'tokens' => $tokens], $requestMetadata);
+    }
+
+    /**
+     * Deletes multiple tokens in bulk
+     * @param string $unlockuuid UUID for the bulk operation
+     * @param array $tokens Array of tokens to delete
+     * @param array|null $requestMetadata Additional metadata to include with the request
+     * @return array The result of the bulk deletion operation
+     */
+    public function bulkDeleteTokens($unlockuuid, $tokens, $requestMetadata = null) {
+        return $this->makeRequest('BulkDeleteTokens', 'POST', ['unlockuuid' => $unlockuuid, 'tokens' => $tokens], $requestMetadata);
     }
 
     // System Configuration
@@ -533,5 +545,49 @@ class DatabunkerproApi {
             error_log('Error fetching metrics: ' . $error->getMessage());
             return [];
         }
+    }
+
+    /**
+     * Creates a shared record for a user
+     * @param string $mode User identification mode (e.g., 'email', 'phone', 'token')
+     * @param string $identity User's identifier corresponding to the mode
+     * @param array $options Optional parameters for shared record creation
+     * @param string|null $options['fields'] A string containing names of fields to share separated by commas
+     * @param string|null $options['partner'] It is used as a reference to partner name. It is not enforced.
+     * @param string|null $options['appname'] If defined, shows fields from the user app record instead user profile
+     * @param string|null $options['finaltime'] Expiration time for the shared record
+     * @param array|null $requestMetadata Additional metadata to include with the request
+     * @return array The created shared record information
+     */
+    public function createSharedRecord($mode, $identity, $options = [], $requestMetadata = null) {
+        $data = [
+            'mode' => $mode,
+            'identity' => $identity
+        ];
+
+        if (isset($options['fields'])) {
+            $data['fields'] = $options['fields'];
+        }
+        if (isset($options['partner'])) {
+            $data['partner'] = $options['partner'];
+        }
+        if (isset($options['appname'])) {
+            $data['appname'] = $options['appname'];
+        }
+        if (isset($options['finaltime'])) {
+            $data['finaltime'] = $options['finaltime'];
+        }
+
+        return $this->makeRequest('SharedRecordCreate', 'POST', $data, $requestMetadata);
+    }
+
+    /**
+     * Gets a shared record by its UUID
+     * @param string $recorduuid UUID of the shared record to retrieve
+     * @param array|null $requestMetadata Additional metadata to include with the request
+     * @return array The shared record information
+     */
+    public function getSharedRecord($recorduuid, $requestMetadata = null) {
+        return $this->makeRequest('SharedRecordGet', 'POST', ['recorduuid' => $recorduuid], $requestMetadata);
     }
 } 
