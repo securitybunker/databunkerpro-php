@@ -170,7 +170,7 @@ class DatabunkerproApi {
         return $this->makeRequest('AppdataCreate', 'POST', ['mode' => $mode, 'identity' => $identity, 'appname' => $appname, 'data' => $data], $requestMetadata);
     }
 
-    public function getUserAppData($mode, $identity, $appname, $requestMetadata = null) {
+    public function getAppData($mode, $identity, $appname, $requestMetadata = null) {
         return $this->makeRequest('AppdataGet', 'POST', ['mode' => $mode, 'identity' => $identity, 'appname' => $appname], $requestMetadata);
     }
 
@@ -182,7 +182,7 @@ class DatabunkerproApi {
         return $this->makeRequest('AppdataUpdateRequest', 'POST', ['mode' => $mode, 'identity' => $identity, 'appname' => $appname, 'data' => $data], $requestMetadata);
     }
 
-    public function listUserAppDataRecords($mode, $identity, $requestMetadata = null) {
+    public function listAppDataNames($mode, $identity, $requestMetadata = null) {
         return $this->makeRequest('AppdataListUserAppNames', 'POST', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
     }
 
@@ -307,7 +307,7 @@ class DatabunkerproApi {
         return $this->makeRequest('XTokenCreate', 'POST', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
     }
 
-    // Sensitive Records Tokenization API
+    // Token Management (for example for credit cards)
     public function createToken($tokentype, $record, $options = [], $requestMetadata = null) {
         $data = array_merge(['tokentype' => $tokentype, 'record' => $record], $options);
         return $this->makeRequest('TokenCreate', 'POST', $data, $requestMetadata);
@@ -461,13 +461,14 @@ class DatabunkerproApi {
         return $this->makeRequest('SessionUpsert', 'POST', array_merge(['sessionuuid' => $sessionuuid], $data), $requestMetadata);
     }
 
+    public function deleteSession($sessionuuid, $requestMetadata = null) {
+        return $this->makeRequest('SessionDelete', 'POST', ['sessionuuid' => $sessionuuid], $requestMetadata);
+    }
+
     public function getSession($sessionuuid, $requestMetadata = null) {
         return $this->makeRequest('SessionGet', 'POST', ['sessionuuid' => $sessionuuid], $requestMetadata);
     }
 
-    public function deleteSession($sessionuuid, $requestMetadata = null) {
-        return $this->makeRequest('SessionDelete', 'POST', ['sessionuuid' => $sessionuuid], $requestMetadata);
-    }
     
     /**
      * Gets system statistics
