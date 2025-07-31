@@ -63,18 +63,18 @@ class DatabunkerproAPITest extends TestCase
     public function testCreateUser()
     {
         echo "\nTesting user creation...\n";
-        $userData = [
+        $profile = [
             'email' => 'test' . rand(1000, 999999) . '@example.com',
             'name' => 'Test User ' . rand(1000, 999999),
             'phone' => rand(1000, 999999)
         ];
-        $result = $this->api->createUser($userData);
+        $result = $this->api->createUser($profile);
         $this->assertInternalType('array', $result, 'Response should be an array');
         $this->assertArrayHasKey('status', $result, 'Response should have status key');
         $this->assertEquals('ok', $result['status'], 'Status should be ok');
         $this->assertArrayHasKey('token', $result, 'Response should have token key');
-        echo "Created user with email: " . $userData['email'] . "\n";
-        return $userData['email'];
+        echo "Created user with email: " . $profile['email'] . "\n";
+        return $profile['email'];
     }
 
     public function testGetUser()
@@ -94,20 +94,20 @@ class DatabunkerproAPITest extends TestCase
     {
         echo "\nTesting user update...\n";
         $email = $this->testGetUser();
-        $updateData = [
+        $profile = [
             'name' => 'Updated Test User',
             'phone' => '+9876543210'
         ];
-        $result = $this->api->updateUser('email', $email, $updateData);
+        $result = $this->api->updateUser('email', $email, $profile);
         $this->assertInternalType('array', $result, 'Response should be an array');
         $this->assertArrayHasKey('status', $result, 'Response should have status key');
         $this->assertEquals('ok', $result['status'], 'Status should be ok');
         // Verify the update
         $updatedUser = $this->api->getUser('email', $email);
-        $this->assertEquals($updateData['name'], $updatedUser['profile']['name'], 'Name should be updated');
-        $this->assertEquals($updateData['phone'], $updatedUser['profile']['phone'], 'Phone should be updated');
+        $this->assertEquals($profile['name'], $updatedUser['profile']['name'], 'Name should be updated');
+        $this->assertEquals($profile['phone'], $updatedUser['profile']['phone'], 'Phone should be updated');
         echo "Updated user with email: " . $email . "\n";
-        echo "New name: " . $updateData['name'] . "\n";
-        echo "New phone: " . $updateData['phone'] . "\n";
+        echo "New name: " . $profile['name'] . "\n";
+        echo "New phone: " . $profile['phone'] . "\n";
     }
 } 

@@ -15,7 +15,7 @@ class DatabunkerproApi {
         $this->xBunkerTenant = $xBunkerTenant;
     }
 
-    private function makeRequest($endpoint, $method = 'POST', $data = null, $requestMetadata = null) {
+    private function makeRequest($endpoint, $data = null, $requestMetadata = null) {
         $headers = [
             'Content-Type: application/json'
         ];
@@ -28,7 +28,7 @@ class DatabunkerproApi {
         $url = $this->baseURL . '/v2/' . $endpoint;
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         if ($data || $requestMetadata) {
@@ -58,38 +58,34 @@ class DatabunkerproApi {
         }
     }
 
-    private function rawRequest($endpoint, $method = 'POST', $data = null, $requestMetadata = null) {
+    public function rawRequest($endpoint, $data = null, $requestMetadata = null) {
         $headers = [
             'Content-Type: application/json'
         ];
-
         if ($this->xBunkerToken) {
             $headers[] = 'X-Bunker-Token: ' . $this->xBunkerToken;
         }
-
-        $options = [
-            'http' => [
-                'method' => $method,
-                'header' => $headers
-            ]
-        ];
-
+        $url = $this->baseURL . '/v2/' . $endpoint;
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         if ($data || $requestMetadata) {
             $bodyData = $data ? $data : [];
             if ($requestMetadata) {
                 $bodyData['request_metadata'] = $requestMetadata;
             }
-            $options['http']['content'] = json_encode($bodyData);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($bodyData));
         }
-
-        $context = stream_context_create($options);
-        return file_get_contents($this->baseURL . '/v2/' . $endpoint, false, $context);
+        $response = curl_exec($ch);
+        curl_close($ch);
+        return $response;
     }
 
     // User Management
     public function createUser($profile, $options = [], $requestMetadata = null) {
         $data = ['profile' => $profile];
-        
         if (isset($options['groupname'])) {
             if (is_numeric($options['groupname']) && intval($options['groupname']) == $options['groupname']) {
                 $data['groupid'] = $options['groupname'];
@@ -99,7 +95,6 @@ class DatabunkerproApi {
         } elseif (isset($options['groupid'])) {
             $data['groupid'] = $options['groupid'];
         }
-
         if (isset($options['rolename'])) {
             if (is_numeric($options['rolename']) && intval($options['rolename']) == $options['rolename']) {
                 $data['roleid'] = $options['rolename'];
@@ -109,392 +104,591 @@ class DatabunkerproApi {
         } elseif (isset($options['roleid'])) {
             $data['roleid'] = $options['roleid'];
         }
-
         if (isset($options['slidingtime'])) {
             $data['slidingtime'] = $options['slidingtime'];
         }
         if (isset($options['finaltime'])) {
             $data['finaltime'] = $options['finaltime'];
         }
+        return $this->makeRequest('UserCreate', $data, $requestMetadata);
+    }
 
-        return $this->makeRequest('UserCreate', 'POST', $data, $requestMetadata);
+    public function createUsersBulk($records, $options = [], $requestMetadata = null) {
+        $data = [
+            'records' => array_map(function($record) {
+                $userData = ['profile' => $record['profile']];
+                
+                if (isset($record['groupname'])) {
+                    if (is_numeric($record['groupname']) && intval($record['groupname']) == $record['groupname']) {
+                        $userData['groupid'] = $record['groupname'];
+                    } else {
+                        $userData['groupname'] = $record['groupname'];
+                    }
+                } elseif (isset($record['groupid'])) {
+                    $userData['groupid'] = $record['groupid'];
+                }
+
+                if (isset($record['rolename'])) {
+                    if (is_numeric($record['rolename']) && intval($record['rolename']) == $record['rolename']) {
+                        $userData['roleid'] = $record['rolename'];
+                    } else {
+                        $userData['rolename'] = $record['rolename'];
+                    }
+                } elseif (isset($record['roleid'])) {
+                    $userData['roleid'] = $record['roleid'];
+                }
+                
+                return $userData;
+            }, $records)
+        ];
+
+        if (isset($options['finaltime'])) {
+            $data['finaltime'] = $options['finaltime'];
+        }
+        if (isset($options['slidingtime'])) {
+            $data['slidingtime'] = $options['slidingtime'];
+        }
+
+        return $this->makeRequest('UserCreateBulk', $data, $requestMetadata);
     }
 
     public function getUser($mode, $identity, $requestMetadata = null) {
-        return $this->makeRequest('UserGet', 'POST', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
-    }
-
-    public function deleteUser($mode, $identity, $requestMetadata = null) {
-        return $this->makeRequest('UserDelete', 'POST', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
-    }
-
-    public function requestUserDeletion($mode, $identity, $requestMetadata = null) {
-        return $this->makeRequest('UserDeleteRequest', 'POST', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
+        return $this->makeRequest('UserGet', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
     }
 
     public function updateUser($mode, $identity, $profile, $requestMetadata = null) {
-        return $this->makeRequest('UserUpdate', 'POST', ['mode' => $mode, 'identity' => $identity, 'profile' => $profile], $requestMetadata);
+        return $this->makeRequest('UserUpdate', ['mode' => $mode, 'identity' => $identity, 'profile' => $profile], $requestMetadata);
     }
 
     public function requestUserUpdate($mode, $identity, $profile, $requestMetadata = null) {
-        return $this->makeRequest('UserUpdateRequest', 'POST', ['mode' => $mode, 'identity' => $identity, 'profile' => $profile], $requestMetadata);
+        return $this->makeRequest('UserUpdateRequest', ['mode' => $mode, 'identity' => $identity, 'profile' => $profile], $requestMetadata);
     }
 
+    public function patchUser($mode, $identity, $patch, $requestMetadata = null) {
+        return $this->makeRequest('UserPatch', ['mode' => $mode, 'identity' => $identity, 'patch' => $patch], $requestMetadata);
+    }
+
+    public function requestUserPatch($mode, $identity, $patch, $requestMetadata = null) {
+        return $this->makeRequest('UserPatchRequest', ['mode' => $mode, 'identity' => $identity, 'patch' => $patch], $requestMetadata);
+    }
+
+    public function deleteUser($mode, $identity, $requestMetadata = null) {
+        return $this->makeRequest('UserDelete', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
+    }
+
+    public function requestUserDeletion($mode, $identity, $requestMetadata = null) {
+        return $this->makeRequest('UserDeleteRequest', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
+    }
+
+    // User Authentication
     public function preloginUser($mode, $identity, $code, $captchacode, $requestMetadata = null) {
-        return $this->makeRequest('UserPrelogin', 'POST', ['mode' => $mode, 'identity' => $identity, 'code' => $code, 'captchacode' => $captchacode], $requestMetadata);
+        return $this->makeRequest('UserPrelogin', ['mode' => $mode, 'identity' => $identity, 'code' => $code, 'captchacode' => $captchacode], $requestMetadata);
     }
 
     public function loginUser($mode, $identity, $smscode, $requestMetadata = null) {
-        return $this->makeRequest('UserLogin', 'POST', ['mode' => $mode, 'identity' => $identity, 'smscode' => $smscode], $requestMetadata);
+        return $this->makeRequest('UserLogin', ['mode' => $mode, 'identity' => $identity, 'smscode' => $smscode], $requestMetadata);
+    }
+
+    public function createCaptcha($requestMetadata = null) {
+        return $this->makeRequest('CaptchaCreate', null, $requestMetadata);
+    }
+
+    // Create user API Access Token
+    public function createUserXToken($mode, $identity, $options = [], $requestMetadata = null) {
+        $data = array_merge(['mode' => $mode, 'identity' => $identity], $options);
+        return $this->makeRequest('XTokenCreateForUser', $data, $requestMetadata);
+    }
+
+    public function createRoleXToken($roleref, $options = [], $requestMetadata = null) {
+        $data = $options;
+        if (is_numeric($roleref) && intval($roleref) == $roleref) {
+            $data['roleid'] = $roleref;
+        } else {
+            $data['rolename'] = $roleref;
+        }
+        return $this->makeRequest('XTokenCreateForRole', $data, $requestMetadata);
     }
 
     // User Request Management
     public function getUserRequest($requestuuid, $requestMetadata = null) {
-        return $this->makeRequest('UserRequestGet', 'POST', ['requestuuid' => $requestuuid], $requestMetadata);
+        return $this->makeRequest('UserRequestGet', ['requestuuid' => $requestuuid], $requestMetadata);
     }
 
     public function listUserRequests($mode, $identity, $offset = 0, $limit = 10, $requestMetadata = null) {
-        return $this->makeRequest('UserRequestListUserRequests', 'POST', ['mode' => $mode, 'identity' => $identity, 'offset' => $offset, 'limit' => $limit], $requestMetadata);
+        return $this->makeRequest('UserRequestListUserRequests', ['mode' => $mode, 'identity' => $identity, 'offset' => $offset, 'limit' => $limit], $requestMetadata);
     }
 
-    public function cancelUserRequest($requestuuid, $reason = null, $requestMetadata = null) {
-        return $this->makeRequest('UserRequestCancel', 'POST', ['requestuuid' => $requestuuid, 'reason' => $reason], $requestMetadata);
+    public function cancelUserRequest($requestuuid, $options = [], $requestMetadata = null) {
+        $data = ['requestuuid' => $requestuuid];
+        if (isset($options['reason'])) {
+            $data['reason'] = $options['reason'];
+        }
+        return $this->makeRequest('UserRequestCancel', $data, $requestMetadata);
     }
 
-    public function approveUserRequest($requestuuid, $reason = null, $requestMetadata = null) {
-        return $this->makeRequest('UserRequestApprove', 'POST', ['requestuuid' => $requestuuid, 'reason' => $reason], $requestMetadata);
+    public function approveUserRequest($requestuuid, $options = [], $requestMetadata = null) {
+        $data = ['requestuuid' => $requestuuid];
+        if (isset($options['reason'])) {
+            $data['reason'] = $options['reason'];
+        }
+        return $this->makeRequest('UserRequestApprove', $data, $requestMetadata);
     }
 
     // App Data Management
-    public function createAppData($mode, $identity, $appname, $data, $requestMetadata = null) {
-        return $this->makeRequest('AppdataCreate', 'POST', ['mode' => $mode, 'identity' => $identity, 'appname' => $appname, 'data' => $data], $requestMetadata);
+    public function createAppData($mode, $identity, $appname, $appdata, $requestMetadata = null) {
+        return $this->makeRequest('AppdataCreate', ['mode' => $mode, 'identity' => $identity, 'appname' => $appname, 'appdata' => $appdata], $requestMetadata);
     }
 
     public function getAppData($mode, $identity, $appname, $requestMetadata = null) {
-        return $this->makeRequest('AppdataGet', 'POST', ['mode' => $mode, 'identity' => $identity, 'appname' => $appname], $requestMetadata);
+        return $this->makeRequest('AppdataGet', ['mode' => $mode, 'identity' => $identity, 'appname' => $appname], $requestMetadata);
     }
 
-    public function updateAppData($mode, $identity, $appname, $data, $requestMetadata = null) {
-        return $this->makeRequest('AppdataUpdate', 'POST', ['mode' => $mode, 'identity' => $identity, 'appname' => $appname, 'data' => $data], $requestMetadata);
+    public function updateAppData($mode, $identity, $appname, $appdata, $requestMetadata = null) {
+        return $this->makeRequest('AppdataUpdate', ['mode' => $mode, 'identity' => $identity, 'appname' => $appname, 'appdata' => $appdata], $requestMetadata);
     }
 
-    public function requestAppDataUpdate($mode, $identity, $appname, $data, $requestMetadata = null) {
-        return $this->makeRequest('AppdataUpdateRequest', 'POST', ['mode' => $mode, 'identity' => $identity, 'appname' => $appname, 'data' => $data], $requestMetadata);
+    public function requestAppDataUpdate($mode, $identity, $appname, $appdata, $requestMetadata = null) {
+        return $this->makeRequest('AppdataUpdateRequest', ['mode' => $mode, 'identity' => $identity, 'appname' => $appname, 'appdata' => $appdata], $requestMetadata);
     }
 
     public function listAppDataNames($mode, $identity, $requestMetadata = null) {
-        return $this->makeRequest('AppdataListUserAppNames', 'POST', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
+        return $this->makeRequest('AppdataListUserAppNames', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
     }
 
     public function listAppNames($requestMetadata = null) {
-        return $this->makeRequest('AppdataListAppNames', 'POST', null, $requestMetadata);
+        return $this->makeRequest('AppdataListAppNames', null, $requestMetadata);
     }
 
     // Legal Basis Management
     public function createLegalBasis($options, $requestMetadata = null) {
-        return $this->makeRequest('LegalBasisCreate', 'POST', $options, $requestMetadata);
+        return $this->makeRequest('LegalBasisCreate', $options, $requestMetadata);
     }
 
-    public function updateLegalBasis($options, $requestMetadata = null) {
-        return $this->makeRequest('LegalBasisUpdate', 'POST', $options, $requestMetadata);
+    public function updateLegalBasis($brief, $options, $requestMetadata = null) {
+        $data = array_merge(['brief' => $brief], $options);
+        return $this->makeRequest('LegalBasisUpdate', $data, $requestMetadata);
+    }
+
+    public function deleteLegalBasis($brief, $requestMetadata = null) {
+        return $this->makeRequest('LegalBasisDelete', ['brief' => $brief], $requestMetadata);
     }
 
     public function listAgreements($requestMetadata = null) {
-        return $this->makeRequest('LegalBasisListAgreements', 'POST', null, $requestMetadata);
+        return $this->makeRequest('LegalBasisListAgreements', null, $requestMetadata);
     }
 
     // Agreement Management
-    public function acceptAgreement($mode, $identity, $options, $requestMetadata = null) {
-        $data = array_merge(['mode' => $mode, 'identity' => $identity], $options);
-        return $this->makeRequest('AgreementAccept', 'POST', $data, $requestMetadata);
-    }
-
-    public function cancelAgreement($mode, $identity, $brief, $requestMetadata = null) {
-        return $this->makeRequest('AgreementCancel', 'POST', ['mode' => $mode, 'identity' => $identity, 'brief' => $brief], $requestMetadata);
-    }
-
-    public function requestAgreementCancellation($mode, $identity, $brief, $requestMetadata = null) {
-        return $this->makeRequest('AgreementCancelRequest', 'POST', ['mode' => $mode, 'identity' => $identity, 'brief' => $brief], $requestMetadata);
+    public function acceptAgreement($mode, $identity, $brief, $options = [], $requestMetadata = null) {
+        $data = ['mode' => $mode, 'identity' => $identity, 'brief' => $brief];
+        if (isset($options['agreementmethod'])) {
+            $data['agreementmethod'] = $options['agreementmethod'];
+        }
+        if (isset($options['lastmodifiedby'])) {
+            $data['lastmodifiedby'] = $options['lastmodifiedby'];
+        }
+        if (isset($options['referencecode'])) {
+            $data['referencecode'] = $options['referencecode'];
+        }
+        if (isset($options['starttime'])) {
+            $data['starttime'] = $options['starttime'];
+        }
+        if (isset($options['finaltime'])) {
+            $data['finaltime'] = $options['finaltime'];
+        }
+        if (isset($options['status'])) {
+            $data['status'] = $options['status'];
+        }
+        return $this->makeRequest('AgreementAccept', $data, $requestMetadata);
     }
 
     public function getUserAgreement($mode, $identity, $brief, $requestMetadata = null) {
-        return $this->makeRequest('AgreementGet', 'POST', ['mode' => $mode, 'identity' => $identity, 'brief' => $brief], $requestMetadata);
+        $data = ['mode' => $mode, 'identity' => $identity, 'brief' => $brief];
+        return $this->makeRequest('AgreementGet', $data, $requestMetadata);
     }
 
     public function listUserAgreements($mode, $identity, $requestMetadata = null) {
-        return $this->makeRequest('AgreementListUserAgreements', 'POST', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
+        $data = ['mode' => $mode, 'identity' => $identity];
+        return $this->makeRequest('AgreementListUserAgreements', $data, $requestMetadata);
+    }
+
+    public function cancelAgreement($mode, $identity, $brief, $requestMetadata = null) {
+        $data = ['mode' => $mode, 'identity' => $identity, 'brief' => $brief];
+        return $this->makeRequest('AgreementCancel', $data, $requestMetadata);
+    }
+
+    public function requestAgreementCancellation($mode, $identity, $brief, $requestMetadata = null) {
+        $data = ['mode' => $mode, 'identity' => $identity, 'brief' => $brief];
+        return $this->makeRequest('AgreementCancelRequest', $data, $requestMetadata);
+    }
+
+    public function revokeAllAgreements($brief, $requestMetadata = null) {
+        $data = ['brief' => $brief];
+        return $this->makeRequest('AgreementRevokeAll', $data, $requestMetadata);
     }
 
     // Processing Activity Management
     public function listProcessingActivities($requestMetadata = null) {
-        return $this->makeRequest('ProcessingActivityListActivities', 'POST', null, $requestMetadata);
+        return $this->makeRequest('ProcessingActivityListActivities', null, $requestMetadata);
+    }
+
+    public function createProcessingActivity($options, $requestMetadata = null) {
+        return $this->makeRequest('ProcessingActivityCreate', $options, $requestMetadata);
+    }
+
+    public function updateProcessingActivity($activity, $options, $requestMetadata = null) {
+        $data = array_merge(['activity' => $activity], $options);
+        return $this->makeRequest('ProcessingActivityUpdate', $data, $requestMetadata);
+    }
+
+    public function deleteProcessingActivity($activity, $requestMetadata = null) {
+        $data = ['activity' => $activity];
+        return $this->makeRequest('ProcessingActivityDelete', $data, $requestMetadata);
+    }
+
+    public function linkProcessingActivityToLegalBasis($activity, $brief, $requestMetadata = null) {
+        $data = ['activity' => $activity, 'brief' => $brief];
+        return $this->makeRequest('ProcessingActivityLinkLegalBasis', $data, $requestMetadata);
+    }
+
+    public function unlinkProcessingActivityFromLegalBasis($activity, $brief, $requestMetadata = null) {
+        $data = ['activity' => $activity, 'brief' => $brief];
+        return $this->makeRequest('ProcessingActivityUnlinkLegalBasis', $data, $requestMetadata);
     }
 
     // Connector Management
     public function listSupportedConnectors($requestMetadata = null) {
-        return $this->makeRequest('ConnectorListSupportedConnectors', 'POST', null, $requestMetadata);
+        return $this->makeRequest('ConnectorListSupportedConnectors', null, $requestMetadata);
     }
 
     public function listConnectors($offset = 0, $limit = 10, $requestMetadata = null) {
-        return $this->makeRequest('ConnectorListConnectors', 'POST', ['offset' => $offset, 'limit' => $limit], $requestMetadata);
+        $data = ['offset' => $offset, 'limit' => $limit];
+        return $this->makeRequest('ConnectorListConnectors', $data, $requestMetadata);
     }
 
     public function createConnector($options, $requestMetadata = null) {
-        return $this->makeRequest('ConnectorCreate', 'POST', $options, $requestMetadata);
+        return $this->makeRequest('ConnectorCreate', $options, $requestMetadata);
     }
 
-    public function updateConnector($options, $requestMetadata = null) {
-        return $this->makeRequest('ConnectorUpdate', 'POST', $options, $requestMetadata);
+    public function updateConnector($connectorid, $options, $requestMetadata = null) {
+        $data = array_merge(['connectorid' => $connectorid], $options);
+        return $this->makeRequest('ConnectorUpdate', $data, $requestMetadata);
     }
 
-    public function validateConnectorConnectivity($options, $requestMetadata = null) {
-        return $this->makeRequest('ConnectorValidateConnectivity', 'POST', $options, $requestMetadata);
+    public function validateConnectorConnectivity($connectorref, $options = [], $requestMetadata = null) {
+        $data = $options;
+        if (is_numeric($connectorref) && intval($connectorref) == $connectorref) {
+            $data['connectorid'] = $connectorref;
+        } else {
+            $data['connectorname'] = $connectorref;
+        }
+        return $this->makeRequest('ConnectorValidateConnectivity', $data, $requestMetadata);
     }
 
-    public function deleteConnector($connectorid, $requestMetadata = null) {
-        return $this->makeRequest('ConnectorDelete', 'POST', ['connectorid' => $connectorid], $requestMetadata);
+    public function deleteConnector($connectorref, $requestMetadata = null) {
+        $data = [];
+        if (is_numeric($connectorref) && intval($connectorref) == $connectorref) {
+            $data['connectorid'] = $connectorref;
+        } else {
+            $data['connectorname'] = $connectorref;
+        }
+        return $this->makeRequest('ConnectorDelete', $data, $requestMetadata);
     }
 
-    public function getTableMetadata($options, $requestMetadata = null) {
-        return $this->makeRequest('ConnectorGetTableMetaData', 'POST', $options, $requestMetadata);
+    public function getTableMetadata($connectorref, $options = [], $requestMetadata = null) {
+        $data = $options;
+        if (is_numeric($connectorref) && intval($connectorref) == $connectorref) {
+            $data['connectorid'] = $connectorref;
+        } else {
+            $data['connectorname'] = $connectorref;
+        }
+        return $this->makeRequest('ConnectorGetTableMetaData', $data, $requestMetadata);
     }
 
-    public function connectorGetUserData($mode, $identity, $connectorid, $requestMetadata = null) {
-        return $this->makeRequest('ConnectorGetUserData', 'POST', ['mode' => $mode, 'identity' => $identity, 'connectorid' => $connectorid], $requestMetadata);
+    public function connectorGetUserData($mode, $identity, $connectorref, $requestMetadata = null) {
+        $data = ['mode' => $mode, 'identity' => $identity];
+        if (is_numeric($connectorref) && intval($connectorref) == $connectorref) {
+            $data['connectorid'] = $connectorref;
+        } else {
+            $data['connectorname'] = $connectorref;
+        }
+        return $this->makeRequest('ConnectorGetUserData', $data, $requestMetadata);
     }
 
-    public function connectorGetUserExtraData($mode, $identity, $connectorid, $requestMetadata = null) {
-        return $this->makeRequest('ConnectorGetUserExtraData', 'POST', ['mode' => $mode, 'identity' => $identity, 'connectorid' => $connectorid], $requestMetadata);
+    public function connectorGetUserExtraData($mode, $identity, $connectorref, $requestMetadata = null) {
+        $data = ['mode' => $mode, 'identity' => $identity];
+        if (is_numeric($connectorref) && intval($connectorref) == $connectorref) {
+            $data['connectorid'] = $connectorref;
+        } else {
+            $data['connectorname'] = $connectorref;
+        }
+        return $this->makeRequest('ConnectorGetUserExtraData', $data, $requestMetadata);
     }
 
-    public function connectorDeleteUser($mode, $identity, $connectorid, $requestMetadata = null) {
-        return $this->makeRequest('ConnectorDeleteUser', 'POST', ['mode' => $mode, 'identity' => $identity, 'connectorid' => $connectorid], $requestMetadata);
+    public function connectorDeleteUser($mode, $identity, $connectorref, $requestMetadata = null) {
+        $data = ['mode' => $mode, 'identity' => $identity];
+        if (is_numeric($connectorref) && intval($connectorref) == $connectorref) {
+            $data['connectorid'] = $connectorref;
+        } else {
+            $data['connectorname'] = $connectorref;
+        }
+        return $this->makeRequest('ConnectorDeleteUser', $data, $requestMetadata);
     }
 
     // Group Management
-    public function createGroup($groupname, $groupdesc = '', $requestMetadata = null) {
-        return $this->makeRequest('GroupCreate', 'POST', ['groupname' => $groupname, 'groupdesc' => $groupdesc], $requestMetadata);
+    public function createGroup($options, $requestMetadata = null) {
+        return $this->makeRequest('GroupCreate', $options, $requestMetadata);
     }
 
-    public function getGroup($groupid, $requestMetadata = null) {
-        return $this->makeRequest('GroupGet', 'POST', ['groupid' => $groupid], $requestMetadata);
+    public function getGroup($groupref, $requestMetadata = null) {
+        $data = [];
+        if (is_numeric($groupref) && intval($groupref) == $groupref) {
+            $data['groupid'] = $groupref;
+        } else {
+            $data['groupname'] = $groupref;
+        }
+        return $this->makeRequest('GroupGet', $data, $requestMetadata);
     }
 
     public function listAllGroups($requestMetadata = null) {
-        return $this->makeRequest('GroupListAllGroups', 'POST', null, $requestMetadata);
+        return $this->makeRequest('GroupListAllGroups', null, $requestMetadata);
     }
 
-    public function addUserToGroup($mode, $identity, $groupname, $rolename = null, $requestMetadata = null) {
-        $data = ['mode' => $mode, 'identity' => $identity];
-        
-        if (is_numeric($groupname) && intval($groupname) == $groupname) {
-            $data['groupid'] = $groupname;
+    public function listUserGroups($mode, $identity, $requestMetadata = null) {
+        return $this->makeRequest('GroupListUserGroups', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
+    }
+
+    public function updateGroup($groupid, $options, $requestMetadata = null) {
+        $data = array_merge(['groupid' => $groupid], $options);
+        return $this->makeRequest('GroupUpdate', $data, $requestMetadata);
+    }
+
+    public function deleteGroup($groupref, $requestMetadata = null) {
+        $data = [];
+        if (is_numeric($groupref) && intval($groupref) == $groupref) {
+            $data['groupid'] = $groupref;
         } else {
-            $data['groupname'] = $groupname;
+            $data['groupname'] = $groupref;
         }
-        if ($rolename) {
-            if (is_numeric($rolename) && intval($rolename) == $rolename) {
-                $data['roleid'] = $rolename;
+        return $this->makeRequest('GroupDelete', $data, $requestMetadata);
+    }
+
+    public function removeUserFromGroup($mode, $identity, $groupref, $requestMetadata = null) {
+        $data = ['mode' => $mode, 'identity' => $identity];
+        if (is_numeric($groupref) && intval($groupref) == $groupref) {
+            $data['groupid'] = $groupref;
+        } else {
+            $data['groupname'] = $groupref;
+        }
+        return $this->makeRequest('GroupDeleteUser', $data, $requestMetadata);
+    }
+
+    public function addUserToGroup($mode, $identity, $groupref, $roleref = null, $requestMetadata = null) {
+        $data = ['mode' => $mode, 'identity' => $identity];
+        if (is_numeric($groupref) && intval($groupref) == $groupref) {
+            $data['groupid'] = $groupref;
+        } else {
+            $data['groupname'] = $groupref;
+        }
+        if ($roleref) {
+            if (is_numeric($roleref) && intval($roleref) == $roleref) {
+                $data['roleid'] = $roleref;
             } else {
-                $data['rolename'] = $rolename;
+                $data['rolename'] = $roleref;
             }
         }
-        return $this->makeRequest('GroupAddUser', 'POST', $data, $requestMetadata);
-    }
-
-    // Access Token Management
-    public function createXToken($mode, $identity, $requestMetadata = null) {
-        return $this->makeRequest('XTokenCreate', 'POST', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
+        return $this->makeRequest('GroupAddUser', $data, $requestMetadata);
     }
 
     // Token Management (for example for credit cards)
     public function createToken($tokentype, $record, $options = [], $requestMetadata = null) {
         $data = array_merge(['tokentype' => $tokentype, 'record' => $record], $options);
-        return $this->makeRequest('TokenCreate', 'POST', $data, $requestMetadata);
+        return $this->makeRequest('TokenCreate', $data, $requestMetadata);
     }
 
     public function createTokensBulk($records, $options = [], $requestMetadata = null) {
         $data = array_merge(['records' => $records], $options);
-        return $this->makeRequest('TokenCreateBulk', 'POST', $data, $requestMetadata);
+        return $this->makeRequest('TokenCreateBulk', $data, $requestMetadata);
     }
 
     public function getToken($token, $requestMetadata = null) {
-        return $this->makeRequest('TokenGet', 'POST', ['token' => $token], $requestMetadata);
+        $data = ['token' => $token];
+        return $this->makeRequest('TokenGet', $data, $requestMetadata);
     }
 
     public function deleteToken($token, $requestMetadata = null) {
-        return $this->makeRequest('TokenDelete', 'POST', ['token' => $token], $requestMetadata);
+        $data = ['token' => $token];
+        return $this->makeRequest('TokenDelete', $data, $requestMetadata);
     }
 
     // Audit Management
     public function listUserAuditEvents($mode, $identity, $offset = 0, $limit = 10, $requestMetadata = null) {
-        return $this->makeRequest('AuditListUserEvents', 'POST', ['mode' => $mode, 'identity' => $identity, 'offset' => $offset, 'limit' => $limit], $requestMetadata);
+        $data = ['mode' => $mode, 'identity' => $identity, 'offset' => $offset, 'limit' => $limit];
+        return $this->makeRequest('AuditListUserEvents', $data, $requestMetadata);
     }
 
     public function getAuditEvent($auditeventuuid, $requestMetadata = null) {
-        return $this->makeRequest('AuditGetEvent', 'POST', ['auditeventuuid' => $auditeventuuid], $requestMetadata);
+        $data = ['auditeventuuid' => $auditeventuuid];
+        return $this->makeRequest('AuditGetEvent', $data, $requestMetadata);
     }
 
     // Tenant Management
-    public function createTenant($data, $requestMetadata = null) {
-        return $this->makeRequest('TenantCreate', 'POST', $data, $requestMetadata);
+    public function createTenant($options, $requestMetadata = null) {
+        return $this->makeRequest('TenantCreate', $options, $requestMetadata);
     }
 
     public function getTenant($tenantid, $requestMetadata = null) {
-        return $this->makeRequest('TenantGet', 'POST', ['tenantid' => $tenantid], $requestMetadata);
+        $data = ['tenantid' => $tenantid];
+        return $this->makeRequest('TenantGet', $data, $requestMetadata);
     }
 
-    public function updateTenant($tenantid, $tenantname, $tenantorg, $email, $requestMetadata = null) {
-        return $this->makeRequest('TenantUpdate', 'POST', ['tenantid' => $tenantid, 'tenantname' => $tenantname, 'tenantorg' => $tenantorg, 'email' => $email], $requestMetadata);
+    public function updateTenant($tenantid, $options, $requestMetadata = null) {
+        $data = array_merge(['tenantid' => $tenantid], $options);
+        return $this->makeRequest('TenantUpdate', $data, $requestMetadata);
     }
 
     public function deleteTenant($tenantid, $requestMetadata = null) {
-        return $this->makeRequest('TenantDelete', 'POST', ['tenantid' => $tenantid], $requestMetadata);
+        $data = ['tenantid' => $tenantid];
+        return $this->makeRequest('TenantDelete', $data, $requestMetadata);
     }
 
     public function listTenants($offset = 0, $limit = 10, $requestMetadata = null) {
-        return $this->makeRequest('TenantListTenants', 'POST', ['offset' => $offset, 'limit' => $limit], $requestMetadata);
+        $data = ['offset' => $offset, 'limit' => $limit];
+        return $this->makeRequest('TenantListTenants', $data, $requestMetadata);
     }
 
     // Role Management
-    public function createRole($rolename, $requestMetadata = null) {
-        return $this->makeRequest('RoleCreate', 'POST', ['rolename' => $rolename], $requestMetadata);
+    public function createRole($options, $requestMetadata = null) {
+        return $this->makeRequest('RoleCreate', $options, $requestMetadata);
     }
 
-    public function linkPolicy($rolename, $policyname, $requestMetadata = null) {
-        return $this->makeRequest('RoleLinkPolicy', 'POST', ['rolename' => $rolename, 'policyname' => $policyname], $requestMetadata);
+    public function updateRole($roleid, $options, $requestMetadata = null) {
+        $data = array_merge(['roleid' => $roleid], $options);
+        return $this->makeRequest('RoleUpdate', $data, $requestMetadata);
+    }
+
+    public function linkPolicy($roleref, $policyref, $requestMetadata = null) {
+        $data = [];
+        if (is_numeric($roleref) && intval($roleref) == $roleref) {
+            $data['roleid'] = $roleref;
+        } else {
+            $data['rolename'] = $roleref;
+        }
+        if (is_numeric($policyref) && intval($policyref) == $policyref) {
+            $data['policyid'] = $policyref;
+        } else {
+            $data['policyname'] = $policyref;
+        }
+        return $this->makeRequest('RoleLinkPolicy', $data, $requestMetadata);
     }
 
     // Policy Management
-    public function createPolicy($data, $requestMetadata = null) {
-        return $this->makeRequest('PolicyCreate', 'POST', $data, $requestMetadata);
+    public function createPolicy($options, $requestMetadata = null) {
+        return $this->makeRequest('PolicyCreate', $options, $requestMetadata);
     }
 
-    public function updatePolicy($policyid, $data, $requestMetadata = null) {
-        return $this->makeRequest('PolicyUpdate', 'POST', array_merge(['policyid' => $policyid], $data), $requestMetadata);
+    public function updatePolicy($policyid, $options, $requestMetadata = null) {
+        $data = array_merge(['policyid' => $policyid], $options);
+        return $this->makeRequest('PolicyUpdate', $data, $requestMetadata);
     }
 
-    public function getPolicy($policyname, $requestMetadata = null) {
+    public function getPolicy($policyref, $requestMetadata = null) {
         $data = [];
-        if ($policyname) {
-            if (is_numeric($policyname) && intval($policyname) == $policyname) {
-                $data['policyid'] = $policyname;
-            } else {
-                $data['policyname'] = $policyname;
-            }
+        if (is_numeric($policyref) && intval($policyref) == $policyref) {
+            $data['policyid'] = $policyref;
+        } else {
+            $data['policyname'] = $policyref;
         }
-        return $this->makeRequest('PolicyGet', 'POST', $data, $requestMetadata);
+        return $this->makeRequest('PolicyGet', $data, $requestMetadata);
     }
 
     public function listPolicies($requestMetadata = null) {
-        return $this->makeRequest('PolicyListAllPolicies', 'POST', null, $requestMetadata);
+        return $this->makeRequest('PolicyListAllPolicies', null, $requestMetadata);
     }
 
     // Bulk Operations
     public function bulkListUnlock($requestMetadata = null) {
-        return $this->makeRequest('BulkListUnlock', 'POST', null, $requestMetadata);
+        return $this->makeRequest('BulkListUnlock', null, $requestMetadata);
     }
 
     public function bulkListUsers($unlockuuid, $offset = 0, $limit = 10, $requestMetadata = null) {
-        return $this->makeRequest('BulkListUsers', 'POST', ['unlockuuid' => $unlockuuid, 'offset' => $offset, 'limit' => $limit], $requestMetadata);
+        $data = ['unlockuuid' => $unlockuuid, 'offset' => $offset, 'limit' => $limit];
+        return $this->makeRequest('BulkListUsers', $data, $requestMetadata);
     }
 
-    public function bulkListGroupUsers($unlockuuid, $groupname, $offset = 0, $limit = 10, $requestMetadata = null) {
+    public function bulkListGroupUsers($unlockuuid, $groupref, $offset = 0, $limit = 10, $requestMetadata = null) {
         $data = ['unlockuuid' => $unlockuuid, 'offset' => $offset, 'limit' => $limit];
-        if (is_numeric($groupname) && intval($groupname) == $groupname) {
-            $data['groupid'] = $groupname;
+        if (is_numeric($groupref) && intval($groupref) == $groupref) {
+            $data['groupid'] = $groupref;
         } else {
-            $data['groupname'] = $groupname;
+            $data['groupname'] = $groupref;
         }
-        return $this->makeRequest('BulkListGroupUsers', 'POST', $data, $requestMetadata);
+        return $this->makeRequest('BulkListGroupUsers', $data, $requestMetadata);
     }
 
     public function bulkListUserRequests($unlockuuid, $offset = 0, $limit = 10, $requestMetadata = null) {
-        return $this->makeRequest('BulkListUserRequests', 'POST', ['unlockuuid' => $unlockuuid, 'offset' => $offset, 'limit' => $limit], $requestMetadata);
+        $data = ['unlockuuid' => $unlockuuid, 'offset' => $offset, 'limit' => $limit];
+        return $this->makeRequest('BulkListUserRequests', $data, $requestMetadata);
     }
 
     public function bulkListAuditEvents($unlockuuid, $offset = 0, $limit = 10, $requestMetadata = null) {
-        return $this->makeRequest('BulkListAuditEvents', 'POST', ['unlockuuid' => $unlockuuid, 'offset' => $offset, 'limit' => $limit], $requestMetadata);
+        $data = ['unlockuuid' => $unlockuuid, 'offset' => $offset, 'limit' => $limit];
+        return $this->makeRequest('BulkListAuditEvents', $data, $requestMetadata);
     }
 
-    /**
-     * Lists multiple tokens in bulk
-     * @param string $unlockuuid UUID for the bulk operation
-     * @param array $tokens Array of tokens to list
-     * @param array|null $requestMetadata Additional metadata to include with the request
-     * @return array The list of tokens information
-     */
     public function bulkListTokens($unlockuuid, $tokens, $requestMetadata = null) {
-        return $this->makeRequest('BulkListTokens', 'POST', ['unlockuuid' => $unlockuuid, 'tokens' => $tokens], $requestMetadata);
+        $data = ['unlockuuid' => $unlockuuid, 'tokens' => $tokens];
+        return $this->makeRequest('BulkListTokens', $data, $requestMetadata);
     }
 
-    /**
-     * Deletes multiple tokens in bulk
-     * @param string $unlockuuid UUID for the bulk operation
-     * @param array $tokens Array of tokens to delete
-     * @param array|null $requestMetadata Additional metadata to include with the request
-     * @return array The result of the bulk deletion operation
-     */
     public function bulkDeleteTokens($unlockuuid, $tokens, $requestMetadata = null) {
-        return $this->makeRequest('BulkDeleteTokens', 'POST', ['unlockuuid' => $unlockuuid, 'tokens' => $tokens], $requestMetadata);
+        $data = ['unlockuuid' => $unlockuuid, 'tokens' => $tokens];
+        return $this->makeRequest('BulkDeleteTokens', $data, $requestMetadata);
     }
 
     // System Configuration
     public function getUIConf() {
-        return $this->makeRequest('TenantGetUIConf', 'POST');
+        return $this->makeRequest('TenantGetUIConf');
     }
 
     public function getTenantConf() {
-        return $this->makeRequest('TenantGetConf', 'POST');
+        return $this->makeRequest('TenantGetUIConf');
     }
 
     public function getUserHTMLReport($mode, $identity, $requestMetadata = null) {
-        return $this->makeRequest('SystemGetUserHTMLReport', 'POST', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
+        $data = ['mode' => $mode, 'identity' => $identity];
+        return $this->makeRequest('SystemGetUserHTMLReport', $data, $requestMetadata);
     }
 
     public function getUserReport($mode, $identity, $requestMetadata = null) {
-        return $this->makeRequest('SystemGetUserReport', 'POST', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
+        $data = ['mode' => $mode, 'identity' => $identity];
+        return $this->makeRequest('SystemGetUserReport', $data, $requestMetadata);
     }
 
     // Session Management
-    public function upsertSession($sessionuuid, $data, $requestMetadata = null) {
-        return $this->makeRequest('SessionUpsert', 'POST', array_merge(['sessionuuid' => $sessionuuid], $data), $requestMetadata);
+    public function upsertSession($sessionuuid, $sessiondata, $options = [], $requestMetadata = null) {
+        $data = array_merge(['sessionuuid' => $sessionuuid, 'sessiondata' => $sessiondata], $options);
+        return $this->makeRequest('SessionUpsert', $data, $requestMetadata);
     }
 
     public function deleteSession($sessionuuid, $requestMetadata = null) {
-        return $this->makeRequest('SessionDelete', 'POST', ['sessionuuid' => $sessionuuid], $requestMetadata);
+        $data = ['sessionuuid' => $sessionuuid];
+        return $this->makeRequest('SessionDelete', $data, $requestMetadata);
+    }
+
+    public function listUserSessions($mode, $identity, $requestMetadata = null) {
+        $data = ['mode' => $mode, 'identity' => $identity];
+        return $this->makeRequest('SessionListUserSessions', $data, $requestMetadata);
     }
 
     public function getSession($sessionuuid, $requestMetadata = null) {
-        return $this->makeRequest('SessionGet', 'POST', ['sessionuuid' => $sessionuuid], $requestMetadata);
+        $data = ['sessionuuid' => $sessionuuid];
+        return $this->makeRequest('SessionGet', $data, $requestMetadata);
     }
 
-    
-    /**
-     * Gets system statistics
-     * @param array|null $requestMetadata Additional metadata to include with the request
-     * @return array System statistics
-     * 
-     * Response format:
-     * {
-     *   "status": "ok",
-     *   "stats": {
-     *     "numusers": 123, // Total number of users in the system
-     *     "numtenants": 123, // Total number of tenants
-     *     "numtokens": 123, // Total number of tokens
-     *     "numsessions": 123 // Total number of active sessions
-     *   }
-     * }
-     */
     public function getSystemStats($requestMetadata = null) {
-        return $this->makeRequest('SystemGetSystemStats', 'POST', null, $requestMetadata);
+        return $this->makeRequest('SystemGetSystemStats', null, $requestMetadata);
     }
 
-    /**
-     * Parses Prometheus metrics text into a structured array
-     * @param string $metricsText The raw metrics text from Prometheus
-     * @return array Parsed metrics
-     */
     public function parsePrometheusMetrics($metricsText) {
         $lines = explode("\n", $metricsText);
         $metrics = [];
@@ -517,13 +711,7 @@ class DatabunkerproApi {
         return $metrics;
     }
 
-    /**
-     * Gets system metrics from the Prometheus endpoint
-     * @param array|null $requestMetadata Additional metadata to include with the request
-     * @return array Parsed system metrics
-     */
     public function getSystemMetrics($requestMetadata = null) {
-        // Call /metrics endpoint
         $url = $this->baseURL . '/metrics';
         $headers = [];
         if ($this->xBunkerToken) {
@@ -548,18 +736,6 @@ class DatabunkerproApi {
         }
     }
 
-    /**
-     * Creates a shared record for a user
-     * @param string $mode User identification mode (e.g., 'email', 'phone', 'token')
-     * @param string $identity User's identifier corresponding to the mode
-     * @param array $options Optional parameters for shared record creation
-     * @param string|null $options['fields'] A string containing names of fields to share separated by commas
-     * @param string|null $options['partner'] It is used as a reference to partner name. It is not enforced.
-     * @param string|null $options['appname'] If defined, shows fields from the user app record instead user profile
-     * @param string|null $options['finaltime'] Expiration time for the shared record
-     * @param array|null $requestMetadata Additional metadata to include with the request
-     * @return array The created shared record information
-     */
     public function createSharedRecord($mode, $identity, $options = [], $requestMetadata = null) {
         $data = [
             'mode' => $mode,
@@ -578,17 +754,11 @@ class DatabunkerproApi {
         if (isset($options['finaltime'])) {
             $data['finaltime'] = $options['finaltime'];
         }
-
-        return $this->makeRequest('SharedRecordCreate', 'POST', $data, $requestMetadata);
+        return $this->makeRequest('SharedRecordCreate', $data, $requestMetadata);
     }
 
-    /**
-     * Gets a shared record by its UUID
-     * @param string $recorduuid UUID of the shared record to retrieve
-     * @param array|null $requestMetadata Additional metadata to include with the request
-     * @return array The shared record information
-     */
     public function getSharedRecord($recorduuid, $requestMetadata = null) {
-        return $this->makeRequest('SharedRecordGet', 'POST', ['recorduuid' => $recorduuid], $requestMetadata);
+        $data = ['recorduuid' => $recorduuid];
+        return $this->makeRequest('SharedRecordGet', $data, $requestMetadata);
     }
-} 
+}
