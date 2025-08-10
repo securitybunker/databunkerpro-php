@@ -645,25 +645,6 @@ class DatabunkerproApi {
         return $this->makeRequest('BulkDeleteTokens', $data, $requestMetadata);
     }
 
-    // System Configuration
-    public function getUIConf() {
-        return $this->makeRequest('TenantGetUIConf');
-    }
-
-    public function getTenantConf() {
-        return $this->makeRequest('TenantGetUIConf');
-    }
-
-    public function getUserHTMLReport($mode, $identity, $requestMetadata = null) {
-        $data = ['mode' => $mode, 'identity' => $identity];
-        return $this->makeRequest('SystemGetUserHTMLReport', $data, $requestMetadata);
-    }
-
-    public function getUserReport($mode, $identity, $requestMetadata = null) {
-        $data = ['mode' => $mode, 'identity' => $identity];
-        return $this->makeRequest('SystemGetUserReport', $data, $requestMetadata);
-    }
-
     // Session Management
     public function upsertSession($sessionuuid, $sessiondata, $options = [], $requestMetadata = null) {
         $data = array_merge(['sessionuuid' => $sessionuuid, 'sessiondata' => $sessiondata], $options);
@@ -685,8 +666,46 @@ class DatabunkerproApi {
         return $this->makeRequest('SessionGet', $data, $requestMetadata);
     }
 
+    // System Configuration
+    public function getUIConf() {
+        return $this->makeRequest('TenantGetUIConf');
+    }
+
+    public function getTenantConf() {
+        return $this->makeRequest('TenantGetUIConf');
+    }
+
+    public function getUserHTMLReport($mode, $identity, $requestMetadata = null) {
+        $data = ['mode' => $mode, 'identity' => $identity];
+        return $this->makeRequest('SystemGetUserHTMLReport', $data, $requestMetadata);
+    }
+
+    public function getUserReport($mode, $identity, $requestMetadata = null) {
+        $data = ['mode' => $mode, 'identity' => $identity];
+        return $this->makeRequest('SystemGetUserReport', $data, $requestMetadata);
+    }
+
     public function getSystemStats($requestMetadata = null) {
         return $this->makeRequest('SystemGetSystemStats', null, $requestMetadata);
+    }
+
+    /**
+     * Generates a new wrapping key from three Shamir's Secret Sharing keys
+     * @param string $key1 - First Shamir secret sharing key
+     * @param string $key2 - Second Shamir secret sharing key
+     * @param string $key3 - Third Shamir secret sharing key
+     * @param array|null $requestMetadata - Additional metadata to include with the request
+     * @return array The generated wrapping key
+     *
+     * Response format:
+     * {
+     *   "status": "ok",
+     *   "wrappingkey": "generated-wrapping-key-value"
+     * }
+     */
+    public function generateWrappingKey($key1, $key2, $key3, $requestMetadata = null) {
+        $data = ['key1' => $key1, 'key2' => $key2, 'key3' => $key3];
+        return $this->makeRequest('SystemGenerateWrappingKey', $data, $requestMetadata);
     }
 
     public function parsePrometheusMetrics($metricsText) {
@@ -741,7 +760,6 @@ class DatabunkerproApi {
             'mode' => $mode,
             'identity' => $identity
         ];
-
         if (isset($options['fields'])) {
             $data['fields'] = $options['fields'];
         }
