@@ -180,6 +180,11 @@ class DatabunkerproApi {
         return $this->makeRequest('UserDeleteRequest', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
     }
 
+    public function searchUser($identity, $unlockuuid, $requestMetadata = null) {
+        $data = ['identity' => $identity, 'unlockuuid' => $unlockuuid];
+        return $this->makeRequest('UserSearch', $data, $requestMetadata);
+    }
+
     // User Authentication
     public function preloginUser($mode, $identity, $code, $captchacode, $requestMetadata = null) {
         return $this->makeRequest('UserPrelogin', ['mode' => $mode, 'identity' => $identity, 'code' => $code, 'captchacode' => $captchacode], $requestMetadata);
@@ -675,6 +680,11 @@ class DatabunkerproApi {
         return $this->makeRequest('TenantGetUIConf');
     }
 
+    public function getUserProfiles($mode, $identity, $unlockuuid, $requestMetadata = null) {
+        $data = ['mode' => $mode, 'identity' => $identity, 'unlockuuid' => $unlockuuid];
+        return $this->makeRequest('SystemGetUserProfiles', $data, $requestMetadata);
+    }
+
     public function getUserHTMLReport($mode, $identity, $requestMetadata = null) {
         $data = ['mode' => $mode, 'identity' => $identity];
         return $this->makeRequest('SystemGetUserHTMLReport', $data, $requestMetadata);
@@ -687,6 +697,16 @@ class DatabunkerproApi {
 
     public function getSystemStats($requestMetadata = null) {
         return $this->makeRequest('SystemGetSystemStats', null, $requestMetadata);
+    }
+
+    public function setLicenseKey($licensekey, $requestMetadata = null) {
+        $data = ['licensekey' => $licensekey];
+        return $this->makeRequest('SystemSetLicenseKey', $data, $requestMetadata);
+    }
+
+    public function searchUserProfiles($identity, $unlockuuid, $requestMetadata = null) {
+        $data = ['identity' => $identity, 'unlockuuid' => $unlockuuid];
+        return $this->makeRequest('SystemSearchUserProfiles', $data, $requestMetadata);
     }
 
     /**
