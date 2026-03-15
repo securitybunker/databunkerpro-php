@@ -69,7 +69,7 @@ class DatabunkerproAPITest extends TestCase
             'phone' => rand(1000, 999999)
         ];
         $result = $this->api->createUser($profile);
-        $this->assertInternalType('array', $result, 'Response should be an array');
+        $this->assertIsArray($result, 'Response should be an array');
         $this->assertArrayHasKey('status', $result, 'Response should have status key');
         $this->assertEquals('ok', $result['status'], 'Status should be ok');
         $this->assertArrayHasKey('token', $result, 'Response should have token key');
@@ -82,7 +82,7 @@ class DatabunkerproAPITest extends TestCase
         echo "\nTesting user retrieval...\n";
         $email = $this->testCreateUser();
         $result = $this->api->getUser('email', $email);
-        $this->assertInternalType('array', $result, 'Response should be an array');
+        $this->assertIsArray($result, 'Response should be an array');
         $this->assertArrayHasKey('status', $result, 'Response should have status key');
         $this->assertEquals('ok', $result['status'], 'Status should be ok');
         $this->assertArrayHasKey('profile', $result, 'Response should have profile key');
@@ -99,7 +99,7 @@ class DatabunkerproAPITest extends TestCase
             'phone' => '+9876543210'
         ];
         $result = $this->api->updateUser('email', $email, $profile);
-        $this->assertInternalType('array', $result, 'Response should be an array');
+        $this->assertIsArray($result, 'Response should be an array');
         $this->assertArrayHasKey('status', $result, 'Response should have status key');
         $this->assertEquals('ok', $result['status'], 'Status should be ok');
         // Verify the update
