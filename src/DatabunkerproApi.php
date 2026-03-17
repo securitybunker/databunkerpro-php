@@ -88,21 +88,21 @@ class DatabunkerproApi {
         $data = ['profile' => $profile];
         if (isset($options['groupname'])) {
             if (is_numeric($options['groupname']) && intval($options['groupname']) == $options['groupname']) {
-                $data['groupid'] = $options['groupname'];
+                $data['groupid'] = intval($options['groupname']);
             } else {
                 $data['groupname'] = $options['groupname'];
             }
         } elseif (isset($options['groupid'])) {
-            $data['groupid'] = $options['groupid'];
+            $data['groupid'] = intval($options['groupid']);
         }
         if (isset($options['rolename'])) {
             if (is_numeric($options['rolename']) && intval($options['rolename']) == $options['rolename']) {
-                $data['roleid'] = $options['rolename'];
+                $data['roleid'] = intval($options['rolename']);
             } else {
                 $data['rolename'] = $options['rolename'];
             }
         } elseif (isset($options['roleid'])) {
-            $data['roleid'] = $options['roleid'];
+            $data['roleid'] = intval($options['roleid']);
         }
         if (isset($options['slidingtime'])) {
             $data['slidingtime'] = $options['slidingtime'];
@@ -120,22 +120,22 @@ class DatabunkerproApi {
                 
                 if (isset($record['groupname'])) {
                     if (is_numeric($record['groupname']) && intval($record['groupname']) == $record['groupname']) {
-                        $userData['groupid'] = $record['groupname'];
+                        $userData['groupid'] = intval($record['groupname']);
                     } else {
                         $userData['groupname'] = $record['groupname'];
                     }
                 } elseif (isset($record['groupid'])) {
-                    $userData['groupid'] = $record['groupid'];
+                    $userData['groupid'] = intval($record['groupid']);
                 }
 
                 if (isset($record['rolename'])) {
                     if (is_numeric($record['rolename']) && intval($record['rolename']) == $record['rolename']) {
-                        $userData['roleid'] = $record['rolename'];
+                        $userData['roleid'] = intval($record['rolename']);
                     } else {
                         $userData['rolename'] = $record['rolename'];
                     }
                 } elseif (isset($record['roleid'])) {
-                    $userData['roleid'] = $record['roleid'];
+                    $userData['roleid'] = intval($record['roleid']);
                 }
                 
                 return $userData;
@@ -207,7 +207,7 @@ class DatabunkerproApi {
     public function createRoleXToken($roleref, $options = [], $requestMetadata = null) {
         $data = $options;
         if (is_numeric($roleref) && intval($roleref) == $roleref) {
-            $data['roleid'] = $roleref;
+            $data['roleid'] = intval($roleref);
         } else {
             $data['rolename'] = $roleref;
         }
@@ -382,7 +382,7 @@ class DatabunkerproApi {
     public function validateConnectorConnectivity($connectorref, $options = [], $requestMetadata = null) {
         $data = $options;
         if (is_numeric($connectorref) && intval($connectorref) == $connectorref) {
-            $data['connectorid'] = $connectorref;
+            $data['connectorid'] = intval($connectorref);
         } else {
             $data['connectorname'] = $connectorref;
         }
@@ -392,7 +392,7 @@ class DatabunkerproApi {
     public function deleteConnector($connectorref, $requestMetadata = null) {
         $data = [];
         if (is_numeric($connectorref) && intval($connectorref) == $connectorref) {
-            $data['connectorid'] = $connectorref;
+            $data['connectorid'] = intval($connectorref);
         } else {
             $data['connectorname'] = $connectorref;
         }
@@ -402,7 +402,7 @@ class DatabunkerproApi {
     public function getTableMetadata($connectorref, $options = [], $requestMetadata = null) {
         $data = $options;
         if (is_numeric($connectorref) && intval($connectorref) == $connectorref) {
-            $data['connectorid'] = $connectorref;
+            $data['connectorid'] = intval($connectorref);
         } else {
             $data['connectorname'] = $connectorref;
         }
@@ -412,7 +412,7 @@ class DatabunkerproApi {
     public function connectorGetUserData($mode, $identity, $connectorref, $requestMetadata = null) {
         $data = ['mode' => $mode, 'identity' => $identity];
         if (is_numeric($connectorref) && intval($connectorref) == $connectorref) {
-            $data['connectorid'] = $connectorref;
+            $data['connectorid'] = intval($connectorref);
         } else {
             $data['connectorname'] = $connectorref;
         }
@@ -422,7 +422,7 @@ class DatabunkerproApi {
     public function connectorGetUserExtraData($mode, $identity, $connectorref, $requestMetadata = null) {
         $data = ['mode' => $mode, 'identity' => $identity];
         if (is_numeric($connectorref) && intval($connectorref) == $connectorref) {
-            $data['connectorid'] = $connectorref;
+            $data['connectorid'] = intval($connectorref);
         } else {
             $data['connectorname'] = $connectorref;
         }
@@ -432,7 +432,7 @@ class DatabunkerproApi {
     public function connectorDeleteUser($mode, $identity, $connectorref, $requestMetadata = null) {
         $data = ['mode' => $mode, 'identity' => $identity];
         if (is_numeric($connectorref) && intval($connectorref) == $connectorref) {
-            $data['connectorid'] = $connectorref;
+            $data['connectorid'] = intval($connectorref);
         } else {
             $data['connectorname'] = $connectorref;
         }
@@ -447,7 +447,7 @@ class DatabunkerproApi {
     public function getGroup($groupref, $requestMetadata = null) {
         $data = [];
         if (is_numeric($groupref) && intval($groupref) == $groupref) {
-            $data['groupid'] = $groupref;
+            $data['groupid'] = intval($groupref);
         } else {
             $data['groupname'] = $groupref;
         }
@@ -470,7 +470,7 @@ class DatabunkerproApi {
     public function deleteGroup($groupref, $requestMetadata = null) {
         $data = [];
         if (is_numeric($groupref) && intval($groupref) == $groupref) {
-            $data['groupid'] = $groupref;
+            $data['groupid'] = intval($groupref);
         } else {
             $data['groupname'] = $groupref;
         }
@@ -480,7 +480,7 @@ class DatabunkerproApi {
     public function removeUserFromGroup($mode, $identity, $groupref, $requestMetadata = null) {
         $data = ['mode' => $mode, 'identity' => $identity];
         if (is_numeric($groupref) && intval($groupref) == $groupref) {
-            $data['groupid'] = $groupref;
+            $data['groupid'] = intval($groupref);
         } else {
             $data['groupname'] = $groupref;
         }
@@ -490,13 +490,13 @@ class DatabunkerproApi {
     public function addUserToGroup($mode, $identity, $groupref, $roleref = null, $requestMetadata = null) {
         $data = ['mode' => $mode, 'identity' => $identity];
         if (is_numeric($groupref) && intval($groupref) == $groupref) {
-            $data['groupid'] = $groupref;
+            $data['groupid'] = intval($groupref);
         } else {
             $data['groupname'] = $groupref;
         }
         if ($roleref) {
             if (is_numeric($roleref) && intval($roleref) == $roleref) {
-                $data['roleid'] = $roleref;
+                $data['roleid'] = intval($roleref);
             } else {
                 $data['rolename'] = $roleref;
             }
@@ -574,12 +574,12 @@ class DatabunkerproApi {
     public function linkPolicy($roleref, $policyref, $requestMetadata = null) {
         $data = [];
         if (is_numeric($roleref) && intval($roleref) == $roleref) {
-            $data['roleid'] = $roleref;
+            $data['roleid'] = intval($roleref);
         } else {
             $data['rolename'] = $roleref;
         }
         if (is_numeric($policyref) && intval($policyref) == $policyref) {
-            $data['policyid'] = $policyref;
+            $data['policyid'] = intval($policyref);
         } else {
             $data['policyname'] = $policyref;
         }
@@ -599,7 +599,7 @@ class DatabunkerproApi {
     public function getPolicy($policyref, $requestMetadata = null) {
         $data = [];
         if (is_numeric($policyref) && intval($policyref) == $policyref) {
-            $data['policyid'] = $policyref;
+            $data['policyid'] = intval($policyref);
         } else {
             $data['policyname'] = $policyref;
         }
@@ -623,7 +623,7 @@ class DatabunkerproApi {
     public function bulkListGroupUsers($unlockuuid, $groupref, $offset = 0, $limit = 10, $requestMetadata = null) {
         $data = ['unlockuuid' => $unlockuuid, 'offset' => $offset, 'limit' => $limit];
         if (is_numeric($groupref) && intval($groupref) == $groupref) {
-            $data['groupid'] = $groupref;
+            $data['groupid'] = intval($groupref);
         } else {
             $data['groupname'] = $groupref;
         }
@@ -707,6 +707,28 @@ class DatabunkerproApi {
     public function searchUserProfiles($identity, $unlockuuid, $requestMetadata = null) {
         $data = ['identity' => $identity, 'unlockuuid' => $unlockuuid];
         return $this->makeRequest('SystemSearchUserProfiles', $data, $requestMetadata);
+    }
+
+    public function deleteUserProfiles($mode, $identity, $unlockuuid, $tenantref = null, $requestMetadata = null) {
+        $data = ['mode' => $mode, 'identity' => $identity, 'unlockuuid' => $unlockuuid];
+        if ($tenantref !== null) {
+            if (is_numeric($tenantref) && intval($tenantref) == $tenantref) {
+                $data['tenantid'] = intval($tenantref);
+            } else {
+                $data['tenantname'] = $tenantref;
+            }
+        }
+        return $this->makeRequest('SystemDeleteUserProfiles', $data, $requestMetadata);
+    }
+
+    public function restoreUserProfile($token, $unlockuuid, $tenantref, $requestMetadata = null) {
+        $data = ['token' => $token, 'unlockuuid' => $unlockuuid];
+        if (is_numeric($tenantref) && intval($tenantref) == $tenantref) {
+            $data['tenantid'] = intval($tenantref);
+        } else {
+            $data['tenantname'] = $tenantref;
+        }
+        return $this->makeRequest('SystemRestoreUserProfile', $data, $requestMetadata);
     }
 
     /**
