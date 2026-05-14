@@ -60,7 +60,6 @@ The library provides methods for all DatabunkerPro API endpoints:
 - Legal Basis Management
 - Agreement Management
 - Processing Activity Management
-- Connector Management
 - Group Management
 - Token Management
 - Audit Management
