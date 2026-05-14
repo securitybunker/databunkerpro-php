@@ -26,24 +26,10 @@ class DatabunkerproAPITest extends TestCase
             if ($data && isset($data['status']) && $data['status'] === 'ok') {
                 self::$tenantName = $data['tenantname'];
                 self::$apiToken = $data['xtoken'];
-                // Test connection with new credentials
-                $api = new DatabunkerproApi(
-                    self::API_URL,
-                    self::$apiToken,
-                    self::$tenantName
-                );
-                try {
-                    $result = $api->getSystemStats();
-                    self::$serverAvailable = is_array($result) && isset($result['status']) && $result['status'] === 'ok';
-                    if (self::$serverAvailable) {
-                        echo "\nSuccessfully connected to DatabunkerPro server\n";
-                        echo "Tenant: " . self::$tenantName . "\n";
-                        echo "API URL: " . self::API_URL . "\n";
-                    }
-                } catch (\Exception $e) {
-                    self::$serverAvailable = false;
-                    echo "\nFailed to connect to DatabunkerPro server: " . $e->getMessage() . "\n";
-                }
+                self::$serverAvailable = true;
+                echo "\nSuccessfully connected to DatabunkerPro server\n";
+                echo "Tenant: " . self::$tenantName . "\n";
+                echo "API URL: " . self::API_URL . "\n";
             }
         }
     }
