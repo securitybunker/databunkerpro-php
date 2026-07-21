@@ -8,11 +8,16 @@ class DatabunkerproApi {
     private $baseURL;
     private $xBunkerToken;
     private $xBunkerTenant;
+    private $verifySsl;
 
-    public function __construct($baseURL, $xBunkerToken = '', $xBunkerTenant = '') {
+    // $verifySsl defaults to true so TLS certificates are validated on every request.
+    // Only pass false for a self-hosted instance using a self-signed certificate in a
+    // trusted/dev network — disabling it exposes traffic (tokens + PII) to MITM attacks.
+    public function __construct($baseURL, $xBunkerToken = '', $xBunkerTenant = '', $verifySsl = true) {
         $this->baseURL = $baseURL;
         $this->xBunkerToken = $xBunkerToken;
         $this->xBunkerTenant = $xBunkerTenant;
+        $this->verifySsl = $verifySsl;
     }
 
     private function makeRequest($endpoint, $data = null, $requestMetadata = null) {
@@ -30,7 +35,8 @@ class DatabunkerproApi {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $this->verifySsl);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $this->verifySsl ? 2 : 0);
         if ($data || $requestMetadata) {
             $bodyData = $data ? $data : [];
             if ($requestMetadata) {
@@ -70,7 +76,8 @@ class DatabunkerproApi {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $this->verifySsl);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $this->verifySsl ? 2 : 0);
         if ($data || $requestMetadata) {
             $bodyData = $data ? $data : [];
             if ($requestMetadata) {

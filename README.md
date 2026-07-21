@@ -11,6 +11,7 @@ Official PHP client library for the DatabunkerPro API.
 
 - PHP 5.6 or higher
 - JSON extension
+- cURL extension
 
 ## Installation
 
@@ -50,6 +51,24 @@ $api->updateUser('email', 'user@example.com', [
     'name' => 'John Smith'
 ]);
 ```
+
+### TLS certificate verification
+
+By default the client **verifies the server's TLS certificate** on every request. This is the
+secure default and should be left on in production. If you run a self-hosted Databunker instance
+with a self-signed certificate in a trusted/development network, you can opt out by passing
+`false` as the fourth constructor argument:
+
+```php
+// Verify TLS certificates (default, recommended)
+$api = new DatabunkerproAPI($baseURL, $token, $tenant);
+
+// Disable verification — only for self-signed certs on a trusted network
+$api = new DatabunkerproAPI($baseURL, $token, $tenant, false);
+```
+
+Disabling verification exposes your traffic (access token and personal data) to
+man-in-the-middle interception, so avoid it against any public endpoint.
 
 ## Available Methods
 
@@ -95,6 +114,27 @@ Fix code style issues:
 ```bash
 composer cs-fix
 ```
+
+## Security
+
+This library is scanned on every push and pull request, with a weekly scheduled sweep to catch drift:
+
+- **SAST (Semgrep):** static analysis using the `p/php`, `p/secrets`, `p/security-audit`, and `p/owasp-top-ten` rulesets. A finding fails the check, and results are published to the repository's **Code Scanning** tab. See [`.github/workflows/semgrep.yml`](.github/workflows/semgrep.yml).
+- **Supply-chain hardening:** every GitHub Action is pinned to a full commit SHA, so a mutable tag (`@v4`) cannot be silently repointed to malicious code.
+- **TLS on by default:** the client verifies server certificates unless you explicitly opt out (see [TLS certificate verification](#tls-certificate-verification)).
+
+Reproduce the SAST scan locally:
+
+```bash
+pip install semgrep
+semgrep scan \
+    --config p/php \
+    --config p/secrets \
+    --config p/security-audit \
+    --config p/owasp-top-ten
+```
+
+To report a security vulnerability, please email hello@databunker.org rather than opening a public issue.
 
 ## Contributing
 
