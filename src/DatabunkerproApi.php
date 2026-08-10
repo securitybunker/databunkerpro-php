@@ -295,8 +295,12 @@ class DatabunkerproApi {
         return $this->makeRequest('FileGet', $data, $requestMetadata);
     }
 
-    public function listUserFiles($mode, $identity, $requestMetadata = null) {
-        return $this->makeRequest('FileListUserFiles', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
+    public function listUserFiles($mode, $identity, $tag = null, $requestMetadata = null) {
+        $data = ['mode' => $mode, 'identity' => $identity];
+        if ($tag !== null) {
+            $data['tag'] = $tag;
+        }
+        return $this->makeRequest('FileListUserFiles', $data, $requestMetadata);
     }
 
     public function replaceFileTags($mode, $identity, $fileuuid, $tags, $requestMetadata = null) {
@@ -609,6 +613,11 @@ class DatabunkerproApi {
     public function bulkListAllAuditEvents($unlockuuid, $offset = 0, $limit = 10, $requestMetadata = null) {
         $data = ['unlockuuid' => $unlockuuid, 'offset' => $offset, 'limit' => $limit];
         return $this->makeRequest('BulkListAllAuditEvents', $data, $requestMetadata);
+    }
+
+    public function bulkListFilesByTag($unlockuuid, $tag, $offset = 0, $limit = 10, $requestMetadata = null) {
+        $data = ['unlockuuid' => $unlockuuid, 'tag' => $tag, 'offset' => $offset, 'limit' => $limit];
+        return $this->makeRequest('BulkListFilesByTag', $data, $requestMetadata);
     }
 
     public function bulkListTokens($unlockuuid, $tokens, $requestMetadata = null) {
