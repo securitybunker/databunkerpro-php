@@ -183,6 +183,14 @@ class DatabunkerproApi {
         return $this->makeRequest('UserDelete', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
     }
 
+    public function deleteUsersBulk($users, $requestMetadata = null) {
+        return $this->makeRequest('UserDeleteBulk', ['users' => $users], $requestMetadata);
+    }
+
+    public function listUserVersions($mode, $identity, $requestMetadata = null) {
+        return $this->makeRequest('UserListVersions', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
+    }
+
     public function requestUserDeletion($mode, $identity, $requestMetadata = null) {
         return $this->makeRequest('UserDeleteRequest', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
     }
@@ -190,19 +198,6 @@ class DatabunkerproApi {
     public function searchUser($identity, $unlockuuid, $requestMetadata = null) {
         $data = ['identity' => $identity, 'unlockuuid' => $unlockuuid];
         return $this->makeRequest('UserSearch', $data, $requestMetadata);
-    }
-
-    // User Authentication
-    public function preloginUser($mode, $identity, $code, $captchacode, $requestMetadata = null) {
-        return $this->makeRequest('UserPrelogin', ['mode' => $mode, 'identity' => $identity, 'code' => $code, 'captchacode' => $captchacode], $requestMetadata);
-    }
-
-    public function loginUser($mode, $identity, $smscode, $requestMetadata = null) {
-        return $this->makeRequest('UserLogin', ['mode' => $mode, 'identity' => $identity, 'smscode' => $smscode], $requestMetadata);
-    }
-
-    public function createCaptcha($requestMetadata = null) {
-        return $this->makeRequest('CaptchaCreate', null, $requestMetadata);
     }
 
     // Create user API Access Token
@@ -269,6 +264,49 @@ class DatabunkerproApi {
 
     public function listAppNames($requestMetadata = null) {
         return $this->makeRequest('AppdataListAppNames', null, $requestMetadata);
+    }
+
+    public function deleteAppData($mode, $identity, $appname, $requestMetadata = null) {
+        return $this->makeRequest('AppdataDelete', ['mode' => $mode, 'identity' => $identity, 'appname' => $appname], $requestMetadata);
+    }
+
+    public function listAppDataVersions($mode, $identity, $appname, $requestMetadata = null) {
+        return $this->makeRequest('AppdataListVersions', ['mode' => $mode, 'identity' => $identity, 'appname' => $appname], $requestMetadata);
+    }
+
+    // File Storage
+    public function createFile($mode, $identity, $filename, $filedata, $options = [], $requestMetadata = null) {
+        $data = ['mode' => $mode, 'identity' => $identity, 'filename' => $filename, 'filedata' => $filedata];
+        foreach (['mimetype', 'tags', 'slidingtime', 'finaltime'] as $key) {
+            if (isset($options[$key])) {
+                $data[$key] = $options[$key];
+            }
+        }
+        return $this->makeRequest('FileCreate', $data, $requestMetadata);
+    }
+
+    public function getFile($mode, $identity, $options = [], $requestMetadata = null) {
+        $data = ['mode' => $mode, 'identity' => $identity];
+        foreach (['fileuuid', 'filename', 'raw'] as $key) {
+            if (isset($options[$key])) {
+                $data[$key] = $options[$key];
+            }
+        }
+        return $this->makeRequest('FileGet', $data, $requestMetadata);
+    }
+
+    public function listUserFiles($mode, $identity, $requestMetadata = null) {
+        return $this->makeRequest('FileListUserFiles', ['mode' => $mode, 'identity' => $identity], $requestMetadata);
+    }
+
+    public function replaceFileTags($mode, $identity, $fileuuid, $tags, $requestMetadata = null) {
+        $data = ['mode' => $mode, 'identity' => $identity, 'fileuuid' => $fileuuid, 'tags' => $tags];
+        return $this->makeRequest('FileReplaceTags', $data, $requestMetadata);
+    }
+
+    public function deleteFile($mode, $identity, $fileuuid, $requestMetadata = null) {
+        $data = ['mode' => $mode, 'identity' => $identity, 'fileuuid' => $fileuuid];
+        return $this->makeRequest('FileDelete', $data, $requestMetadata);
     }
 
     // Legal Basis Management
@@ -548,6 +586,11 @@ class DatabunkerproApi {
         return $this->makeRequest('BulkListUsers', $data, $requestMetadata);
     }
 
+    public function bulkListAllUsers($unlockuuid, $offset = 0, $limit = 10, $requestMetadata = null) {
+        $data = ['unlockuuid' => $unlockuuid, 'offset' => $offset, 'limit' => $limit];
+        return $this->makeRequest('BulkListAllUsers', $data, $requestMetadata);
+    }
+
     public function bulkListGroupUsers($unlockuuid, $groupref, $offset = 0, $limit = 10, $requestMetadata = null) {
         $data = ['unlockuuid' => $unlockuuid, 'offset' => $offset, 'limit' => $limit];
         if (is_numeric($groupref) && intval($groupref) == $groupref) {
@@ -558,14 +601,14 @@ class DatabunkerproApi {
         return $this->makeRequest('BulkListGroupUsers', $data, $requestMetadata);
     }
 
-    public function bulkListUserRequests($unlockuuid, $offset = 0, $limit = 10, $requestMetadata = null) {
+    public function bulkListAllUserRequests($unlockuuid, $offset = 0, $limit = 10, $requestMetadata = null) {
         $data = ['unlockuuid' => $unlockuuid, 'offset' => $offset, 'limit' => $limit];
-        return $this->makeRequest('BulkListUserRequests', $data, $requestMetadata);
+        return $this->makeRequest('BulkListAllUserRequests', $data, $requestMetadata);
     }
 
-    public function bulkListAuditEvents($unlockuuid, $offset = 0, $limit = 10, $requestMetadata = null) {
+    public function bulkListAllAuditEvents($unlockuuid, $offset = 0, $limit = 10, $requestMetadata = null) {
         $data = ['unlockuuid' => $unlockuuid, 'offset' => $offset, 'limit' => $limit];
-        return $this->makeRequest('BulkListAuditEvents', $data, $requestMetadata);
+        return $this->makeRequest('BulkListAllAuditEvents', $data, $requestMetadata);
     }
 
     public function bulkListTokens($unlockuuid, $tokens, $requestMetadata = null) {
@@ -597,15 +640,6 @@ class DatabunkerproApi {
     public function getSession($sessionuuid, $requestMetadata = null) {
         $data = ['sessionuuid' => $sessionuuid];
         return $this->makeRequest('SessionGet', $data, $requestMetadata);
-    }
-
-    // System Configuration
-    public function getUIConf() {
-        return $this->makeRequest('TenantGetUIConf');
-    }
-
-    public function getTenantConf() {
-        return $this->makeRequest('TenantGetUIConf');
     }
 
     public function getUserProfiles($mode, $identity, $unlockuuid, $requestMetadata = null) {
