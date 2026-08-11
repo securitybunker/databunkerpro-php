@@ -28,10 +28,10 @@ composer require securitybunker/databunkerpro-php
 
 require 'vendor/autoload.php';
 
-use DatabunkerPro\DatabunkerproAPI;
+use DatabunkerPro\DatabunkerproApi;
 
 // Initialize the client
-$api = new DatabunkerproAPI(
+$api = new DatabunkerproApi(
     'https://your-databunker-instance.com',
     'your-x-bunker-token',
     'your-tenant-id'
@@ -52,6 +52,24 @@ $api->updateUser('email', 'user@example.com', [
 ]);
 ```
 
+### File storage
+
+Files are attached to a user and can carry tags for later lookup:
+
+```php
+// Store a file against a user, tagged for later retrieval
+$api->createFile('email', 'user@example.com', 'passport.pdf', base64_encode($bytes), [
+    'mimetype' => 'application/pdf',
+    'tags' => ['identity-docs']
+]);
+
+// List that user's files, optionally filtered by tag
+$files = $api->listUserFiles('email', 'user@example.com', 'identity-docs');
+
+// Fetch one back by name or uuid
+$file = $api->getFile('email', 'user@example.com', ['filename' => 'passport.pdf']);
+```
+
 ### TLS certificate verification
 
 By default the client **verifies the server's TLS certificate** on every request. This is the
@@ -61,10 +79,10 @@ with a self-signed certificate in a trusted/development network, you can opt out
 
 ```php
 // Verify TLS certificates (default, recommended)
-$api = new DatabunkerproAPI($baseURL, $token, $tenant);
+$api = new DatabunkerproApi($baseURL, $token, $tenant);
 
 // Disable verification — only for self-signed certs on a trusted network
-$api = new DatabunkerproAPI($baseURL, $token, $tenant, false);
+$api = new DatabunkerproApi($baseURL, $token, $tenant, false);
 ```
 
 Disabling verification exposes your traffic (access token and personal data) to
@@ -75,7 +93,9 @@ man-in-the-middle interception, so avoid it against any public endpoint.
 The library provides methods for all DatabunkerPro API endpoints:
 
 - User Management
+- User Request Management
 - App Data Management
+- File Storage
 - Legal Basis Management
 - Agreement Management
 - Processing Activity Management
@@ -96,12 +116,6 @@ composer test
 ```
 
 ## Code Quality
-
-Run static analysis:
-
-```bash
-composer phpstan
-```
 
 Check code style:
 
