@@ -20,7 +20,6 @@ class DatabunkerproAPITest extends TestCase
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         $response = curl_exec($ch);
-        curl_close($ch);
         if ($response) {
             $data = json_decode($response, true);
             if ($data && isset($data['status']) && $data['status'] === 'ok') {

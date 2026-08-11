@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-08-11
+
+Note: this release removes five public methods and renames two. They wrapped internal
+portal endpoints that were not part of the public API. See **Removed** and **Fixed**
+below before upgrading from 1.0.0.
+
 ### Added
 - File Storage API: `createFile`, `getFile`, `listUserFiles`, `replaceFileTags`, `deleteFile`
 - `bulkListFilesByTag` to list files carrying a tag across all users in a tenant
@@ -18,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `BulkListAuditEvents`, which do not exist on the server. They now call
   `BulkListAllUserRequests` and `BulkListAllAuditEvents`, and were renamed to
   `bulkListAllUserRequests` and `bulkListAllAuditEvents` to match.
+- Removed `curl_close()` calls, which PHP 8.5 deprecates and which have been a no-op
+  since PHP 8.0. They emitted a deprecation notice on every request under PHP 8.5.
 
 ### Removed
 - `preloginUser`, `loginUser`, `createCaptcha`, `getUIConf` and `getTenantConf`. These wrapped
