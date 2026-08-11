@@ -26,6 +26,8 @@ below before upgrading from 1.0.0.
   `bulkListAllUserRequests` and `bulkListAllAuditEvents` to match.
 - Removed `curl_close()` calls, which PHP 8.5 deprecates and which have been a no-op
   since PHP 8.0. They emitted a deprecation notice on every request under PHP 8.5.
+- `composer.json` now requires `ext-curl`. The client uses cURL on every request but never
+  declared it, so Composer would install on a host without the extension and fail at runtime.
 
 ### Removed
 - `preloginUser`, `loginUser`, `createCaptcha`, `getUIConf` and `getTenantConf`. These wrapped
