@@ -19,6 +19,11 @@ on:
         required: false
         default: false
         type: boolean
+      packagist_only:
+        description: 'Only re-notify Packagist for an already-tagged version (retry a failed publish)'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -48,19 +53,28 @@ jobs:
             exit 1
           fi
           TAG="v$VERSION"
-          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-            echo "::error::Tag $TAG already exists. Releasing it again would move a published tag."
-            exit 1
-          fi
-          # Pull the body of "## [VERSION] - date" up to the next "## [" heading.
-          awk -v ver="$VERSION" '
-            $0 ~ "^## \\[" ver "\\]" { found = 1; next }
-            found && /^## \[/        { exit }
-            found                    { print }
-          ' CHANGELOG.md > notes.md
-          if [ ! -s notes.md ]; then
-            echo "::error::No CHANGELOG.md section found for [$VERSION]. Add one before releasing."
-            exit 1
+          if [ "${{ inputs.packagist_only }}" = "true" ]; then
+            # Retry path: the tag must already exist, and there is nothing to write.
+            if ! git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+              echo "::error::Tag $TAG does not exist. packagist_only only re-notifies an existing release."
+              exit 1
+            fi
+            : > notes.md
+          else
+            if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+              echo "::error::Tag $TAG already exists. Releasing it again would move a published tag."
+              exit 1
+            fi
+            # Pull the body of "## [VERSION] - date" up to the next "## [" heading.
+            awk -v ver="$VERSION" '
+              $0 ~ "^## \\[" ver "\\]" { found = 1; next }
+              found && /^## \[/        { exit }
+              found                    { print }
+            ' CHANGELOG.md > notes.md
+            if [ ! -s notes.md ]; then
+              echo "::error::No CHANGELOG.md section found for [$VERSION]. Add one before releasing."
+              exit 1
+            fi
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
@@ -74,6 +88,7 @@ jobs:
   test:
     name: PHP ${{ matrix.php }}
     needs: check
+    if: ${{ !inputs.packagist_only }}     # the tagged commit was already tested
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -100,7 +115,7 @@ jobs:
   release:
     name: tag and release
     needs: [check, test]
-    if: ${{ !inputs.dry_run }}
+    if: ${{ !inputs.dry_run && !inputs.packagist_only }}
     runs-on: ubuntu-latest
     permissions:
       contents: write        # push the tag, create the release
@@ -143,7 +158,11 @@ jobs:
   packagist:
     name: packagist
     needs: [check, release]
-    if: ${{ !inputs.dry_run }}
+    # Runs after a normal release, or on its own via packagist_only (where the
+    # release job is skipped, so this cannot depend on its success).
+    if: >-
+      ${{ !cancelled() && !inputs.dry_run && needs.check.result == 'success'
+          && (inputs.packagist_only || needs.release.result == 'success') }}
     runs-on: ubuntu-latest
 
     steps:
@@ -157,14 +176,15 @@ jobs:
             echo "::error::PACKAGIST_USERNAME/PACKAGIST_TOKEN are not set. Add them under Settings > Secrets and variables > Actions."
             exit 1
           fi
-          # Credentials go in the query string, so build the URL with --data-urlencode
-          # rather than inlining it — keeps the token out of any command echo.
+          # The API takes credentials in the query string and the repo URL as a JSON body.
+          # Build the URL in a variable rather than inlining it, so the token stays out of
+          # any command echo. Do NOT add curl -G here: it would fold the JSON body into
+          # the query string, leaving the request bodyless and Packagist answering 406.
+          url="https://packagist.org/api/update-package?username=${PACKAGIST_USERNAME}&apiToken=${PACKAGIST_TOKEN}"
           response=$(curl -sS --fail-with-body -X POST \
             -H 'content-type:application/json' \
-            -G "https://packagist.org/api/update-package" \
-            --data-urlencode "username=${PACKAGIST_USERNAME}" \
-            --data-urlencode "apiToken=${PACKAGIST_TOKEN}" \
-            -d '{"repository":{"url":"https://github.com/securitybunker/databunkerpro-php"}}')
+            -d '{"repository":{"url":"https://github.com/securitybunker/databunkerpro-php"}}' \
+            "$url")
           echo "$response"
           # Packagist answers {"status":"success"} once the crawl is queued.
           echo "$response" | grep -q '"status":"success"' || {
