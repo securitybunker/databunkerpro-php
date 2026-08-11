@@ -1,0 +1,173 @@
+# Publishes a new version. Run manually: Actions > release > Run workflow, enter "1.1.0".
+#
+# Packagist serves the package straight from the git tag, so "publishing" is three things:
+# tag the commit, cut a GitHub Release, then tell Packagist to re-crawl. Nothing is uploaded.
+#
+# The workflow creates the tag itself — do not tag by hand first. The test job gates
+# everything, so a version that fails the matrix is never tagged or published.
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, without the leading v (e.g. 1.1.0)'
+        required: true
+        type: string
+      dry_run:
+        description: 'Run every check but do not tag, release, or notify Packagist'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: check
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.validate.outputs.version }}
+      tag: ${{ steps.validate.outputs.tag }}
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0     # need all tags to check for a collision
+
+      - name: Validate version and changelog
+        id: validate
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          # Reject a leading v so the tag is never built as "vv1.1.0".
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'; then
+            echo "::error::'$VERSION' is not a valid version. Use 1.1.0 or 1.1.0-rc1, with no leading v."
+            exit 1
+          fi
+          TAG="v$VERSION"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "::error::Tag $TAG already exists. Releasing it again would move a published tag."
+            exit 1
+          fi
+          # Pull the body of "## [VERSION] - date" up to the next "## [" heading.
+          awk -v ver="$VERSION" '
+            $0 ~ "^## \\[" ver "\\]" { found = 1; next }
+            found && /^## \[/        { exit }
+            found                    { print }
+          ' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then
+            echo "::error::No CHANGELOG.md section found for [$VERSION]. Add one before releasing."
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Upload release notes
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-notes
+          path: notes.md
+
+  test:
+    name: PHP ${{ matrix.php }}
+    needs: check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['7.3', '7.4', '8.0', '8.1', '8.2', '8.3']
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Validate composer.json
+        run: composer validate --strict --no-check-lock
+
+      - name: Run PHPUnit
+        run: composer test
+
+  release:
+    name: tag and release
+    needs: [check, test]
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # push the tag, create the release
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Download release notes
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: release-notes
+
+      - name: Create and push tag
+        env:
+          TAG: ${{ needs.check.outputs.tag }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release ${{ needs.check.outputs.version }}"
+          git push origin "$TAG"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.check.outputs.tag }}
+        run: |
+          set -euo pipefail
+          # A hyphen in the version (1.1.0-rc1) marks it a prerelease.
+          PRERELEASE=""
+          case "$TAG" in
+            *-*) PRERELEASE="--prerelease" ;;
+          esac
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes-file notes.md \
+            --verify-tag \
+            $PRERELEASE
+
+  packagist:
+    name: packagist
+    needs: [check, release]
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Notify Packagist
+        env:
+          PACKAGIST_USERNAME: ${{ secrets.PACKAGIST_USERNAME }}
+          PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PACKAGIST_TOKEN:-}" ] || [ -z "${PACKAGIST_USERNAME:-}" ]; then
+            echo "::error::PACKAGIST_USERNAME/PACKAGIST_TOKEN are not set. Add them under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          # Credentials go in the query string, so build the URL with --data-urlencode
+          # rather than inlining it — keeps the token out of any command echo.
+          response=$(curl -sS --fail-with-body -X POST \
+            -H 'content-type:application/json' \
+            -G "https://packagist.org/api/update-package" \
+            --data-urlencode "username=${PACKAGIST_USERNAME}" \
+            --data-urlencode "apiToken=${PACKAGIST_TOKEN}" \
+            -d '{"repository":{"url":"https://github.com/securitybunker/databunkerpro-php"}}')
+          echo "$response"
+          # Packagist answers {"status":"success"} once the crawl is queued.
+          echo "$response" | grep -q '"status":"success"' || {
+            echo "::error::Packagist did not report success."
+            exit 1
+          }
