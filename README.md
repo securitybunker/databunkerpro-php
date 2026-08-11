@@ -68,6 +68,18 @@ $files = $api->listUserFiles('email', 'user@example.com', 'identity-docs');
 
 // Fetch one back by name or uuid
 $file = $api->getFile('email', 'user@example.com', ['filename' => 'passport.pdf']);
+
+// Replace the complete tag set on a file
+$api->replaceFileTags('email', 'user@example.com', $file['fileuuid'], ['archived']);
+
+$api->deleteFile('email', 'user@example.com', $file['fileuuid']);
+```
+
+Files can also be listed by tag across every user in the tenant, which needs a bulk-unlock uuid:
+
+```php
+$unlock = $api->bulkListUnlock();
+$tagged = $api->bulkListFilesByTag($unlock['unlockuuid'], 'identity-docs', 0, 100);
 ```
 
 ### TLS certificate verification
@@ -107,7 +119,7 @@ The library provides methods for all DatabunkerPro API endpoints:
 - Policy Management
 - Session Management
 
-For detailed API documentation, please refer to the [DatabunkerPro API Documentation](https://databunker.org/databunker-pro-docs/introduction/).
+For detailed API documentation, please refer to the [DatabunkerPro API Documentation](https://docs.databunker.org/pro/get-started/overview).
 
 ## Testing
 
