@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.0] - 2026-08-11
+## [1.1.1] - 2026-08-11
+
+Supersedes 1.1.0, which was tagged and withdrawn before it saw general use. Everything
+below shipped in 1.1.1; there is no installable 1.1.0.
 
 Note: this release removes five public methods and renames two. They wrapped internal
 portal endpoints that were not part of the public API. See **Removed** and **Fixed**
