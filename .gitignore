@@ -30,3 +30,5 @@ Thumbs.db
 .phpunit.cache
 *.swp
 *.swo 
+/sync.sh
+/test.txt

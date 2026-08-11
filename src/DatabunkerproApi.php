@@ -54,12 +54,8 @@ class DatabunkerproApi {
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new Exception('Error decoding JSON response: ' . json_last_error_msg());
             }
-            curl_close($ch);
             return $result;
         } catch (Exception $e) {
-            if (isset($ch)) {
-                curl_close($ch);
-            }
             throw new Exception('Error making request: ' . $e->getMessage());
         }
     }
@@ -86,7 +82,6 @@ class DatabunkerproApi {
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($bodyData));
         }
         $response = curl_exec($ch);
-        curl_close($ch);
         return $response;
     }
 
