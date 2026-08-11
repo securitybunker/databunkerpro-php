@@ -25,7 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   called `TenantGetConf`, which does not exist on the server.
 
 ### Changed
-- Development dependency `squizlabs/php_codesniffer` raised to `^4.0`
+- Development dependencies raised: `phpunit/phpunit` to `^9.6`, `squizlabs/php_codesniffer` to `^4.0`
+- CI now tests against PHP 7.3, 7.4, 8.0, 8.1, 8.2 and 8.3. PHP 7.3 remains the minimum
+  supported version — the client uses no syntax above it.
+- README corrected: it claimed PHP 5.6 while `composer.json` has required 7.3 since 1.0.0
 
 ## [1.0.0] - 2024-03-21
 
