@@ -44,7 +44,10 @@ jobs:
       - name: Validate version and changelog
         id: validate
         env:
+          # Passed through env, never interpolated into the script body: ${{ }} inside a
+          # run: block splices raw input into the shell before it executes.
           VERSION: ${{ inputs.version }}
+          PACKAGIST_ONLY: ${{ inputs.packagist_only }}
         run: |
           set -euo pipefail
           # Reject a leading v so the tag is never built as "vv1.1.0".
@@ -53,7 +56,7 @@ jobs:
             exit 1
           fi
           TAG="v$VERSION"
-          if [ "${{ inputs.packagist_only }}" = "true" ]; then
+          if [ "$PACKAGIST_ONLY" = "true" ]; then
             # Retry path: the tag must already exist, and there is nothing to write.
             if ! git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
               echo "::error::Tag $TAG does not exist. packagist_only only re-notifies an existing release."
@@ -131,11 +134,12 @@ jobs:
       - name: Create and push tag
         env:
           TAG: ${{ needs.check.outputs.tag }}
+          VERSION: ${{ needs.check.outputs.version }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "$TAG" -m "Release ${{ needs.check.outputs.version }}"
+          git tag -a "$TAG" -m "Release $VERSION"
           git push origin "$TAG"
 
       - name: Create GitHub release
