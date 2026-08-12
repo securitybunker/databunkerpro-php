@@ -21,6 +21,95 @@ Install the package using Composer:
 composer require securitybunker/databunkerpro-php
 ```
 
+## Quickstart
+
+You need a Databunker Pro instance to talk to. Demo mode gives you one in a single command — no database, no configuration, everything held in memory:
+
+```bash
+docker run -p 3000:3000 -d --rm --name databunkerpro securitybunker/databunkerpro demo
+```
+
+Check that it came up:
+
+```bash
+docker logs databunkerpro
+```
+
+```
+ Databunker Pro demo is ready
+  Web UI:            http://localhost:3000/
+  Root access token: DEMO
+  Database:          in-memory, erased on restart
+```
+
+The root access token in demo mode is the fixed string `DEMO`. Save this as `quickstart.php`:
+
+```php
+<?php
+require __DIR__ . '/vendor/autoload.php';
+
+use DatabunkerPro\DatabunkerproApi;
+
+$api = new DatabunkerproApi('http://localhost:3000', 'DEMO');
+
+// Create a user record. The vault encrypts the profile and returns a user token.
+$created = $api->createUser([
+    'email' => 'john@phptest.com',
+    'name'  => 'John Doe',
+    'phone' => '+15551234567',
+]);
+echo "User token: " . $created['token'] . "\n";
+
+// Read the record back by any indexed field: token, login, email, phone, custom.
+$user = $api->getUser('email', 'john@phptest.com');
+echo "Profile: " . json_encode($user['profile']) . "\n";
+
+// Store an encrypted file against that user, tagged by document type.
+$file = $api->createFile(
+    'email',
+    'john@phptest.com',
+    'passport.jpg',
+    base64_encode('fake passport scan bytes'),
+    ['tags' => ['passport', 'kyc']]
+);
+echo "File uuid: " . $file['fileuuid'] . " | tags: " . implode(',', $file['tags']) . "\n";
+
+// List the user's files, filtered by tag.
+$listing = $api->listUserFiles('email', 'john@phptest.com', 'kyc');
+echo "Files tagged kyc: " . implode(',', array_column($listing['files'], 'filename')) . "\n";
+
+// Fetch the file back. Content returns base64-encoded in filedata.
+$fetched = $api->getFile('email', 'john@phptest.com', ['fileuuid' => $file['fileuuid']]);
+echo "Decrypted: " . base64_decode($fetched['filedata']) . "\n";
+
+// Delete user record.
+$api->deleteUser('email', 'john@phptest.com');
+echo "User deleted\n";
+```
+
+```bash
+php quickstart.php
+```
+
+```
+User token: a58765a6-22bc-a806-a1b8-b71205f235fd
+Profile: {"email":"john@phptest.com","name":"John Doe","phone":"+15551234567"}
+File uuid: 1ca799e7-1554-e559-96d9-4f8a64be9624 | tags: kyc,passport
+Files tagged kyc: passport.jpg
+Decrypted: fake passport scan bytes
+User deleted
+```
+
+Tags are lowercased, de-duplicated and sorted on write, which is why they come back in a different order than they were sent.
+
+When you are done, stop the instance. It was started with `--rm`, so the container and its in-memory database are discarded:
+
+```bash
+docker stop databunkerpro
+```
+
+> **Demo mode is for evaluation only.** The database is in memory, the wrapping key is a fixed public value, and the root token is the well-known string `DEMO`. Never point it at real personal data. For a real deployment see the [installation guide](https://docs.databunker.org/pro/installation/docker-compose).
+
 ## Usage
 
 ```php
@@ -39,15 +128,15 @@ $api = new DatabunkerproApi(
 
 // Create a user
 $result = $api->createUser([
-    'email' => 'user@example.com',
+    'email' => 'john@phptest.com',
     'name' => 'John Doe'
 ]);
 
 // Get user information
-$user = $api->getUser('email', 'user@example.com');
+$user = $api->getUser('email', 'john@phptest.com');
 
 // Update user
-$api->updateUser('email', 'user@example.com', [
+$api->updateUser('email', 'john@phptest.com', [
     'name' => 'John Smith'
 ]);
 ```
