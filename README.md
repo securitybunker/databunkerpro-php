@@ -194,19 +194,20 @@ man-in-the-middle interception, so avoid it against any public endpoint.
 The library provides methods for all DatabunkerPro API endpoints:
 
 - User Management
-- User Request Management
 - App Data Management
 - File Storage
-- Legal Basis Management
-- Agreement Management
+- Tokenization
+- Legal Basis & Agreement Management
 - Processing Activity Management
 - Group Management
-- Token Management
+- Role & Policy Management
+- Session Management
+- Shared Records
+- Bulk Operations
 - Audit Management
 - Tenant Management
-- Role Management
-- Policy Management
-- Session Management
+- Authentication & Access Tokens
+- System Operations
 
 For detailed API documentation, please refer to the [DatabunkerPro API Documentation](https://docs.databunker.org/pro/get-started/overview).
 
